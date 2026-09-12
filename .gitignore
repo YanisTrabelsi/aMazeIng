@@ -1,4 +1,4 @@
-.venv
-pyrightconfig.json
-__pycache__/
-*/__pycache__/
+./.venv
+./pyrightconfig.json
+./__pycache__/
+./*/__pycache__/
