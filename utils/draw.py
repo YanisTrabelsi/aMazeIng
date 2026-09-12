@@ -32,9 +32,6 @@ def put_cell(mlx, win, x: int, y: int, color: int, hex: int) -> None:
         Put a cell, walls are defined by hex value
     '''
 
-    if (hex <= 0):
-       north(mlx, win, x, y, 0xff0000ff); south(mlx, win, x, y, 0xff0000ff); east(mlx, win, x, y, 0xff0000ff); west(mlx, win, x, y, 0xff0000ff)
-
     if (hex == 0x1):
         north(mlx, win, x, y, color)
     if (hex == 0x2):
