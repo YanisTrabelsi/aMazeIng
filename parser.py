@@ -7,6 +7,5 @@ def parser_tojson() -> None:
         for line in f:
             if (len(line) > 3):
              data.append(line.translate(str.maketrans("", "", "#\n\32")).split('='))
-    print(data)
     with open('./data.json', 'w') as f:
         f.write(json.dumps(dict(data), indent=4))

@@ -96,17 +96,17 @@ m.mlx_string_put(mlx, win, x, y, color, "Hello")
 Une couleur est représentée par un entier :
 
 ```python
-0xRRGGBB
+0xAARRGGBB
 ```
 
 Exemples :
 
 ```python
-BLACK = 0x000000
-WHITE = 0xFFFFFF
-RED   = 0xFF0000
-GREEN = 0x00FF00
-BLUE  = 0x0000FF
+BLACK = 0xFF000000
+WHITE = 0xFFFFFFFF
+RED   = 0xFFFF0000
+GREEN = 0xFF00FF00
+BLUE  = 0xFF0000FF
 ```
 
 ---
