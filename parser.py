@@ -12,4 +12,3 @@ def parser_tojson() -> None:
 
     with open('./data.json', 'w') as f:
         f.write(json.dumps(dict(data), indent=4))
-parser_tojson()

@@ -3,6 +3,13 @@ from utils import put_cell
 import numpy as np
 import numpy.typing as npt
 import random as rd
+from parser import parser_tojson
+import json
+
+parser_tojson()
+with open('data.json') as f:
+    data = json.load(f)
+
 
 BLACK = 0xFF000000
 WHITE = 0xFFFFFFFF
@@ -10,8 +17,8 @@ RED   = 0xFFFF0000
 GREEN = 0xFF00FF00
 BLUE  = 0xFF0000FF
 
-WIDTH = 15
-HEIGHT = 20
+WIDTH = int(data["WIDTH"])
+HEIGHT = int(data["HEIGHT"])
 
 class Direction():
     class Hex():
