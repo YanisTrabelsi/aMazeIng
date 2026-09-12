@@ -11,12 +11,6 @@ with open('data.json') as f:
     data = json.load(f)
 
 
-BLACK = 0xFF000000
-WHITE = 0xFFFFFFFF
-RED   = 0xFFFF0000
-GREEN = 0xFF00FF00
-BLUE  = 0xFF0000FF
-
 WIDTH = int(data["WIDTH"])
 HEIGHT = int(data["HEIGHT"])
 WIN_WIDTH = WIDTH * 30
@@ -38,7 +32,7 @@ class Direction():
 
 m = Mlx()
 mlx = m.mlx_init()
-win = m.mlx_new_window(mlx, WIN_WIDTH, WIN_HEIGHT * 30, "Test")
+win = m.mlx_new_window(mlx, WIN_WIDTH, WIN_HEIGHT, "Test")
 
 grid: npt.NDArray = np.zeros((HEIGHT, WIDTH, 3))
 layer_id = grid[:, :, 0]
@@ -118,7 +112,7 @@ def draw() -> None:
     for v in layer_wall[:, :]:
         y += 1
         for i, v in enumerate(v):
-            put_cell(mlx, win, i * 30, y * 30, RED, v)
+            put_cell(mlx, win, i * 30, y * 30, int(data["TURQUOISE"], 16), v)
 
 
 def destroy_wall():
