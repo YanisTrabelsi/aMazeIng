@@ -19,6 +19,8 @@ BLUE  = 0xFF0000FF
 
 WIDTH = int(data["WIDTH"])
 HEIGHT = int(data["HEIGHT"])
+WIN_WIDTH = WIDTH * 30
+WIN_HEIGHT = HEIGHT * 30
 
 class Direction():
     class Hex():
@@ -36,7 +38,7 @@ class Direction():
 
 m = Mlx()
 mlx = m.mlx_init()
-win = m.mlx_new_window(mlx, WIDTH * 30, HEIGHT * 30, "Test")
+win = m.mlx_new_window(mlx, WIN_WIDTH, WIN_HEIGHT * 30, "Test")
 
 grid: npt.NDArray = np.zeros((HEIGHT, WIDTH, 3))
 layer_id = grid[:, :, 0]
@@ -154,6 +156,3 @@ def destroy_wall():
 m.mlx_key_hook(win, key_hook, None)
 m.mlx_loop_hook(mlx, loop, None)
 m.mlx_loop(mlx)
-
-
-
