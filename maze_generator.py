@@ -11,24 +11,11 @@ with open('data.json') as f:
     data = json.load(f)
 
 
+# CONST VARIABLES
 WIDTH = int(data["WIDTH"])
 HEIGHT = int(data["HEIGHT"])
 WIN_WIDTH = WIDTH * 30
 WIN_HEIGHT = HEIGHT * 30 + 40
-
-class Direction():
-    class Hex():
-        NORTH = 1
-        EAST = 2
-        SOUTH = 4
-        WEST = 8
-
-    class Size():
-        NORTH = -WIDTH
-        EAST = 1
-        SOUTH = WIDTH
-        WEST = -1
-
 
 m = Mlx()
 mlx = m.mlx_init()
@@ -46,6 +33,42 @@ layer_id = np.arange(0, WIDTH * HEIGHT).reshape(HEIGHT, WIDTH)
 layer_const = np.arange(0, WIDTH * HEIGHT).reshape(HEIGHT, WIDTH)
 layer_wall[:, :] = 0xf
 
+class Cell():
+    def __init__(self, id: int):
+        self.const = id
+        self.x: int = self.const // WIDTH
+        self.y: int = self.const % WIDTH
+        self.wall: int = layer_wall[self.x, self.y]
+        self.pos = layer_const[self.x, self.y]
+
+class Direction():
+    class Hex():
+        NORTH = 1
+        EAST = 2
+        SOUTH = 4
+        WEST = 8
+
+    class Size():
+        NORTH = -WIDTH
+        EAST = 1
+        SOUTH = WIDTH
+        WEST = -1
+
+    class Location():
+        class Corner():
+            TL = layer_const[0, 0]
+            TR = layer_const[0, -1]
+            BL = layer_const[-1, 0]
+            BR = layer_const[-1, -1]
+
+        class Border():
+            L = layer_const[:, 0]
+            R = layer_const[:, -1]
+            T = layer_const[0, :]
+            B = layer_const[-1, :]
+
+
+
 
 def draw() -> None:
     matrix_init()
@@ -57,6 +80,7 @@ def draw() -> None:
         for i, v in enumerate(v):
             put_cell(mlx, win, i * 30, y * 30, int(data["TURQUOISE"], 16), v)
     m.mlx_string_put(mlx, win, 10, WIN_HEIGHT - 33, 0xff0000ff, "[Q]: EXIT")
+    m.mlx_string_put(mlx, win, 165, WIN_HEIGHT - 33, 0xff0000ff, "[R]: RELOAD")
 
 
 def loop(param):
@@ -82,48 +106,33 @@ def key_hook(keycode, param):
         layer_wall[:, :] = 0xf
 
 
-class Cell():
-    def __init__(self, id: int):
-        self.id = id
-        self.x: int = self.id // WIDTH
-        self.y: int = self.id % WIDTH
-        self.wall: int = layer_wall[self.x, self.y]
 
 def choose_cell() -> tuple[Cell, Cell]:
     '''Instanciate two Cell with different ID from layer_id'''
-    #print("===== LAYER_ID =====")
-    #print(layer_id)
-    #print("=====          =====")
-    #print("==== LAYER_CONST ===")
-    #print(layer_const)
     base_id = rd.choice(layer_const[:, :].ravel())
-    #print(base_id)
     cell1 = Cell(base_id)
-    #print(f"Cell 1 CONST: {cell1.id}   (x= {cell1.x}, y: {cell1.y})")
 
-    if (cell1.x == 0 and cell1.y == 0):
+    if (cell1.pos == Direction.Location.Corner.TL):
         direction: list[int] = [1, WIDTH]
-    elif (cell1.x == 0 and cell1.y == WIDTH - 1):
+    elif (cell1.pos == Direction.Location.Corner.TR):
         direction: list[int] = [-1, WIDTH]
-    elif (cell1.x == HEIGHT - 1 and cell1.y == 0):
+    elif (cell1.pos == Direction.Location.Corner.BL):
         direction: list[int] = [1, -WIDTH]
-    elif (cell1.x == HEIGHT - 1 and cell1.y == WIDTH - 1):
+    elif (cell1.pos == Direction.Location.Corner.BR):
         direction: list[int] = [-1, -WIDTH]
-    elif (cell1.x == 0):
+    elif (cell1.pos in Direction.Location.Border.T):
         direction: list[int] = [-1, 1, WIDTH]
-    elif (cell1.x == HEIGHT - 1):
+    elif (cell1.pos in Direction.Location.Border.B):
         direction: list[int] = [-1, 1, -WIDTH]
-    elif (cell1.y == 0):
+    elif (cell1.pos in Direction.Location.Border.L):
         direction: list[int] = [1, WIDTH, -WIDTH]
-    elif (cell1.y == WIDTH - 1):
+    elif (cell1.pos in Direction.Location.Border.R):
         direction: list[int] = [-1, WIDTH, -WIDTH]
     else:
         direction: list[int] = [1, -1, WIDTH, -WIDTH]
     
     dir_choice = rd.choice(direction)
-    #print(f"direction : {dir_choice}")
     cell2 = Cell(base_id + dir_choice)
-    #print(f"Cell 2 ID: {cell2.id}   (x= {cell2.x}, y= {cell2.y})")
 
     if (layer_id[cell1.x, cell1.y] == layer_id[cell2.x , cell2.y]):
         return choose_cell()
@@ -137,32 +146,26 @@ def destroy_wall():
     cell1, cell2 = cells[0], cells[1]
     
 
-    direction = cell2.id - cell1.id
+    direction = cell2.const - cell1.const
     ##print(f"direction {direction}")
     if (direction == Direction.Size.NORTH):
-        #print("REMOVE NORTH")
         layer_wall[cell1.x, cell1.y] = layer_wall[cell1.x, cell1.y] - Direction.Hex.NORTH
         layer_wall[cell2.x, cell2.y] = layer_wall[cell2.x, cell2.y] - Direction.Hex.SOUTH
     if (direction == Direction.Size.EAST):
-        #print("REMOVE EAST")
         layer_wall[cell1.x, cell1.y] = layer_wall[cell1.x, cell1.y] - Direction.Hex.EAST
         layer_wall[cell2.x, cell2.y] = layer_wall[cell2.x, cell2.y] - Direction.Hex.WEST
     if (direction == Direction.Size.SOUTH):
-        #print("REMOVE SOUTH")
         layer_wall[cell1.x, cell1.y] = layer_wall[cell1.x, cell1.y] - Direction.Hex.SOUTH
         layer_wall[cell2.x, cell2.y] = layer_wall[cell2.x, cell2.y] - Direction.Hex.NORTH
     if (direction == Direction.Size.WEST):
-        #print("REMOVE WEST")
         layer_wall[cell1.x, cell1.y] = layer_wall[cell1.x, cell1.y] - Direction.Hex.WEST
         layer_wall[cell2.x, cell2.y] = layer_wall[cell2.x, cell2.y] - Direction.Hex.EAST
-    ##print("#" * 10)
     id_to_remove = layer_id[cell2.x, cell2.y]
     for i, line in enumerate(layer_id):
         for j, id in enumerate(line):
             if (id == id_to_remove):
                 layer_id[i, j] = layer_id[cell1.x, cell1.y]
 
-    ##print("#" * 10)
 
 m.mlx_key_hook(win, key_hook, None)
 m.mlx_loop_hook(mlx, loop, None)
