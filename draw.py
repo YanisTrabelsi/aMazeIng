@@ -1,9 +1,15 @@
 from mlx import Mlx
+import json
+from parser import parser_tojson
+
+parser_tojson()
+with open('data.json') as f:
+    data = json.load(f)
 
 m = Mlx()
 
-CELL_SIZE = 30
-WALL_SIZE = 5
+CELL_SIZE = int(data["CELL_SIZE"])
+WALL_SIZE = int(data["WALL_SIZE"])
 
 def west(mlx, win, x: int, y: int, color: int):
     for i in range(CELL_SIZE):
@@ -18,12 +24,12 @@ def north(mlx, win, x: int, y: int, color: int):
 def east(mlx, win, x: int, y: int, color: int):
     for i in range(CELL_SIZE):
         for j in range(WALL_SIZE):
-            m.mlx_pixel_put(mlx, win, j + x + 25, i + y, color) 
+            m.mlx_pixel_put(mlx, win, j + x + CELL_SIZE - WALL_SIZE, i + y, color) 
 
 def south(mlx, win, x: int, y: int, color: int):
     for i in range(WALL_SIZE):
         for j in range(CELL_SIZE):
-            m.mlx_pixel_put(mlx, win, j + x, i + y + 25, color) 
+            m.mlx_pixel_put(mlx, win, j + x, i + y + CELL_SIZE - WALL_SIZE, color) 
 
 
 
