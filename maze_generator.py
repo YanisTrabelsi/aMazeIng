@@ -32,15 +32,6 @@ layer_id = np.arange(0, WIDTH * HEIGHT).reshape(HEIGHT, WIDTH)
 layer_const = np.arange(0, WIDTH * HEIGHT).reshape(HEIGHT, WIDTH)
 layer_wall[:, :] = 0xf
 
-class Cell():
-    def __init__(self, id: int):
-        self.const = id
-        self.x: int = self.const // WIDTH
-        self.y: int = self.const % WIDTH
-        self.get_const = layer_const[self.x, self.y]
-        self.get_wall = layer_wall[self.x, self.y]
-        self.get_id = layer_id[self.x, self.y]
-
 class Direction():
     class Hex():
         NORTH = 1
@@ -55,21 +46,55 @@ class Direction():
         WEST = -1
 
     class Location():
-        class Corner():
-            TL = layer_const[0, 0]
-            TR = layer_const[0, -1]
-            BL = layer_const[-1, 0]
-            BR = layer_const[-1, -1]
+        L = layer_const[:, 0]
+        R = layer_const[:, -1]
+        T = layer_const[0, :]
+        B = layer_const[-1, :]
 
-        class Border():
-            L = layer_const[:, 0]
-            R = layer_const[:, -1]
-            T = layer_const[0, :]
-            B = layer_const[-1, :]
+class Cell():
+    def __init__(self, id: int):
+        self.const = id
+        self.x: int = self.const // WIDTH
+        self.y: int = self.const % WIDTH
+        self.get_const = layer_const[self.x, self.y]
+        self.get_wall = layer_wall[self.x, self.y]
+        self.get_id = layer_id[self.x, self.y]
+        self.is_top: bool = self.get_const in Direction.Location.T
+        self.is_bottom: bool = self.get_const in Direction.Location.B
+        self.is_left: bool = self.get_const in Direction.Location.L
+        self.is_right: bool = self.get_const in Direction.Location.R
+        self.lcell: tuple[int, int] | None = None
+        self.rcell: tuple[int, int] | None = None
+        self.tcell: tuple[int, int] | None = None
+        self.bcell: tuple[int, int] | None = None
+        try:
+            self.lcell = (layer_id[self.x - 1, self.y], layer_const[self.x - 1, self.y])
+        except IndexError:
+            self.lcell = None
+        try:
+            self.rcell = (layer_id[self.x + 1, self.y], layer_const[self.x + 1, self.y])
+        except IndexError:
+            self.rcell = None
+        try:
+            self.tcell = (layer_id[self.x, self.y - 1], layer_const[self.x, self.y - 1])
+        except IndexError:
+            self.tcell = None
+        try:
+            self.bcell = (layer_id[self.x, self.y + 1], layer_const[self.x, self.y + 1])
+        except IndexError:
+            self.bcell = None
+
+        self.valid_cells: list[tuple[int, int] | None] = [
+            cell for cell in (
+                self.lcell,
+                self.rcell,
+                self.tcell,
+                self.bcell,
+            )
+            if cell is not None and cell[0] != self.get_id]
 
 
-
-
+            
 def draw() -> None:
     matrix_init()
 
@@ -111,30 +136,11 @@ def choose_cell() -> tuple[Cell, Cell]:
     '''Instanciate two Cell with different ID from layer_id'''
     base_id = rd.choice(layer_const[:, :].ravel())
     cell1 = Cell(base_id)
-
-    if (cell1.get_const == Direction.Location.Corner.TL):
-        direction: list[int] = [1, WIDTH]
-    elif (cell1.get_const == Direction.Location.Corner.TR):
-        direction: list[int] = [-1, WIDTH]
-    elif (cell1.get_const == Direction.Location.Corner.BL):
-        direction: list[int] = [1, -WIDTH]
-    elif (cell1.get_const == Direction.Location.Corner.BR):
-        direction: list[int] = [-1, -WIDTH]
-    elif (cell1.get_const in Direction.Location.Border.T):
-        direction: list[int] = [-1, 1, WIDTH]
-    elif (cell1.get_const in Direction.Location.Border.B):
-        direction: list[int] = [-1, 1, -WIDTH]
-    elif (cell1.get_const in Direction.Location.Border.L):
-        direction: list[int] = [1, WIDTH, -WIDTH]
-    elif (cell1.get_const in Direction.Location.Border.R):
-        direction: list[int] = [-1, WIDTH, -WIDTH]
-    else:
-        direction: list[int] = [1, -1, WIDTH, -WIDTH]
-    
-    cell2 = Cell(base_id + rd.choice(direction))
-
-    if (layer_id[cell1.x, cell1.y] == layer_id[cell2.x , cell2.y]):
-        return choose_cell()
+    while (len(cell1.valid_cells) < 1):
+        base_id = rd.choice(layer_const[:, :].ravel())
+        cell1 = Cell(base_id)
+    valid_cells: list[int] = [id[1] for id in cell1.valid_cells]
+    cell2 = Cell(rd.choice(valid_cells))
     return (cell1, cell2)
 
 
@@ -143,7 +149,6 @@ def choose_cell() -> tuple[Cell, Cell]:
 def destroy_wall():
     cells: tuple[Cell, Cell] = choose_cell()
     cell1, cell2 = cells[0], cells[1]
-    
 
     direction = cell2.const - cell1.const
     if (direction == Direction.Size.NORTH):
