@@ -75,18 +75,22 @@ class Cell:
         self.rcell: Cell | None = None
         self.tcell: Cell | None = None
         self.bcell: Cell | None = None
+        self.is_entry: bool = False
+        self.is_exit: bool = False
+        self.step: int = -1
+        self.visited: bool = False
+        self.go_north: Cell | None = None
+        self.go_south: Cell | None = None
+        self.go_east: Cell | None = None
+        self.go_west: Cell | None = None
         if not self.is_left:
             self.lcell = cells[self.x, self.y - 1]
-        try:
+        if not self.is_right:
             self.rcell = cells[self.x, self.y + 1]
-        except IndexError:
-            self.rcell = None
         if not self.is_top:
             self.tcell = cells[self.x - 1, self.y]
-        try:
+        if not self.is_bottom:
             self.bcell = cells[self.x + 1, self.y]
-        except IndexError:
-            self.bcell = None
 
         self.valid_cells: list[Cell | None] = [
             cell
@@ -105,15 +109,28 @@ class Cell:
             for cell in line:
                 cell.get_wall = layer_wall[cell.x, cell.y]
                 cell.get_id = layer_id[cell.x, cell.y]
-                cell.valid_cells = cell.valid_cells = [
-                    cell
-                    for cell in (
+                if not cell.is_left:
+                    cell.lcell = cells[cell.x, cell.y - 1]
+                if not cell.is_right:
+                    cell.rcell = cells[cell.x, cell.y + 1]
+                if not cell.is_top:
+                    cell.tcell = cells[cell.x - 1, cell.y]
+                if not cell.is_bottom:
+                    cell.bcell = cells[cell.x + 1, cell.y]
+
+    @staticmethod
+    def sync_valid():
+        for line in cells:
+            for cell in line:
+                cell.valid_cells = [
+                    subcell
+                    for subcell in (
                         cell.lcell,
                         cell.rcell,
                         cell.tcell,
                         cell.bcell,
                     )
-                    if cell is not None and cell.get_id != cell.get_id
+                    if subcell is not None and subcell.get_id != cell.get_id
                 ]
 
 
@@ -121,6 +138,7 @@ for i, line in enumerate(layer_const):
     for j, id in enumerate(line):
         cells[i, j] = Cell(id)
 Cell.sync()
+Cell.sync_valid()
 
 
 def draw() -> None:
@@ -173,9 +191,8 @@ def choose_cell() -> tuple[Cell, Cell]:
     valid_ids: list[Cell] = []
     for line in cells:
         for cell in line:
-            temp = Cell(cell.const)
-            if len(temp.valid_cells) >= 1:
-                valid_ids.append(temp)
+            if len(cell.valid_cells) > 0:
+                valid_ids.append(cell)
 
     cell1 = rd.choice(valid_ids)
     valid_cells_id: list[int] = [
@@ -189,6 +206,7 @@ def choose_cell() -> tuple[Cell, Cell]:
 
 def destroy_wall():
     Cell.sync()
+    Cell.sync_valid()
     cells: tuple[Cell, Cell] = choose_cell()
     cell1, cell2 = cells[0], cells[1]
 
@@ -206,10 +224,13 @@ def destroy_wall():
         layer_wall[cell1.x, cell1.y] -= Direction.Hex.WEST
         layer_wall[cell2.x, cell2.y] -= Direction.Hex.EAST
 
-    print(f"\n\n===  ID  ===\n{layer_id}")
-    print(f"\n=== WALL ===\n{layer_wall}")
-    print(f"\nCELL1| ({cell1.x}, {cell1.y})")
-    print(f"CELL2| ({cell2.x}, {cell2.y})")
+    # print(f"\n\n===  ID  ===\n{layer_id}")
+    # print(f"\n=== WALL ===\n{layer_wall}")
+    # print(f"\nCELL1| ({cell1.x}, {cell1.y})|| const= {cell1.const}")
+    # print(cell1.valid_cells)
+    valid_const = [cell.get_const for cell in cell1.valid_cells if cell is not None]
+    # print(f"valid| {valid_const}")
+    # print(f"CELL2| ({cell2.x}, {cell2.y})|| const= {cell2.const}")
 
     for i, line in enumerate(layer_id):
         for j, id in enumerate(line):
@@ -221,10 +242,10 @@ if __name__ == "__main__":
     m.mlx_key_hook(win, key_hook, None)
     m.mlx_loop_hook(mlx, loop, None)
     m.mlx_loop(mlx)
-    find(cells)
 
     with open(data["OUTPUT_FILE"], "w") as f:
         for line in layer_wall:
             for id in line:
                 f.write(hex(int(id))[2:])
             f.write("\n")
+    find(cells, Direction)
