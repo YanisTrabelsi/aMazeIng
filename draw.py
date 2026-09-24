@@ -36,6 +36,12 @@ def south(mlx, win, x: int, y: int, color: int):
             m.mlx_pixel_put(mlx, win, j + x, i + y + CELL_SIZE - WALL_SIZE, color)
 
 
+def put_path(mlx, win, x: int, y: int, color: int):
+    for i in range(CELL_SIZE // 2):
+        for j in range(CELL_SIZE // 2):
+            m.mlx_pixel_put(mlx, win, x + i + CELL_SIZE // 3, y + j + CELL_SIZE // 3, color)
+
+
 def put_cell(mlx, win, x: int, y: int, color: int, hex: int) -> None:
     """
     Put a cell, walls are defined by hex value

@@ -1,5 +1,5 @@
 from mlx import Mlx
-from draw import put_cell
+from draw import put_cell, put_path
 import numpy as np
 import numpy.typing as npt
 import random as rd
@@ -141,6 +141,26 @@ Cell.sync()
 Cell.sync_valid()
 
 
+def draw_path():
+    target: Cell | None = None
+    for cell in cells.flat:
+        if cell.is_entry:
+            target = cell
+
+    i: int = 0
+    next_target: list = [target]
+    if (target is not None):
+        while not target.is_exit:
+            put_path(mlx, win, target.x + 10, target.y + 7, int(data["GREEN"], 16))
+            next_target.remove(target)
+            if len(next_target) == 0:
+                i += 1
+            for cell in [target.lcell, target.tcell, target.rcell, target.bcell]:
+                if cell.step == i + 1:
+                    next_target.append(cell)
+            target = rd.choice(next_target)
+
+
 def draw() -> None:
     matrix_init()
 
@@ -164,8 +184,13 @@ def loop(param):
     done = np.all(layer_id == layer_id.flat[0])
     if not done:
         destroy_wall()
+        if np.all(layer_id == layer_id.flat[0]):
+            Cell.sync()
+            Cell.sync_valid()
+            find(cells, Direction)
+            draw_path()
     else:
-        m.mlx_clear_window(mlx, win)
+        # m.mlx_clear_window(mlx, win)
         draw()
 
 
@@ -248,4 +273,3 @@ if __name__ == "__main__":
             for id in line:
                 f.write(hex(int(id))[2:])
             f.write("\n")
-    find(cells, Direction)
