@@ -18,6 +18,7 @@ def init_cells(cells: npt.NDArray, Direction) -> tuple:
         if cell.x == int(ENTRY[0]) and cell.y == int(ENTRY[1]):
             cell.is_entry = True
             entry_cell = cell
+            cell.step = 0
         if cell.x == int(EXIT[0]) and cell.y == int(EXIT[1]):
             cell.is_exit = True
             exit_cell = cell
@@ -52,24 +53,6 @@ def find(cells: npt.NDArray, Direction):
     i = 0
     while not target.is_exit:
         i += 1
-        # print(f"\n== {i} ==")
-        # print(f"target: ({target.x}, {target.y})")
-        # print(f"target constID: {target.get_const}")
-        # print(f"target wall: {target.get_wall}")
-        # print(f"step: {step}")
-        # print("can go:", end=' | ')
-        if target.go_north is not None:
-            ...
-            # print("north", end=' | ')
-        if target.go_west is not None:
-            ...
-            # print("west", end=' | ')
-        if target.go_south is not None:
-            ...
-            # print("south", end=' | ')
-        if target.go_east is not None:
-            ...
-            # print("east", end=' | ')
         target.visited = True
 
         neighbours: list = [
@@ -86,17 +69,12 @@ def find(cells: npt.NDArray, Direction):
             cell.step = step + 1
         next_targets.remove(target)
         if len(next_targets) == 0:
-            # print("\nNew List")
             step += 1
             next_targets = [
                 cell
                 for cell in cells.flat
                 if cell.step == step and cell.visited is False
             ]
-        # print("\nNextTargetConst:", end=' | ')
         for e in next_targets:
-            # print(e.get_const, end=' | ')
             for cell in cells.flat:
                 target = rd.choice(next_targets)
-
-    # print("\nPATH FOUNDED")

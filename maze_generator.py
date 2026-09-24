@@ -4,7 +4,6 @@ import numpy as np
 import numpy.typing as npt
 import random as rd
 import json
-from path import find
 
 
 with open("data.json") as f:
@@ -18,6 +17,8 @@ HEIGHT = int(data["HEIGHT"])
 CELL_SIZE = int(data["CELL_SIZE"])
 WIN_WIDTH = WIDTH * CELL_SIZE + 20
 WIN_HEIGHT = HEIGHT * CELL_SIZE + 40
+PADDING_X = 10
+PADDING_Y = 7
 
 m = Mlx()
 mlx = m.mlx_init()
@@ -107,6 +108,11 @@ class Cell:
     def sync():
         for line in cells:
             for cell in line:
+                cell.go_north = None
+                cell.go_south = None
+                cell.go_east = None
+                cell.go_west = None
+                cell.step = -1
                 cell.get_wall = layer_wall[cell.x, cell.y]
                 cell.get_id = layer_id[cell.x, cell.y]
                 if not cell.is_left:
@@ -133,37 +139,53 @@ class Cell:
                     if subcell is not None and subcell.get_id != cell.get_id
                 ]
 
+    @staticmethod
+    def init_cells():
+        for i, line in enumerate(layer_const):
+            for j, id in enumerate(line):
+                cells[i, j] = Cell(id)
 
-for i, line in enumerate(layer_const):
-    for j, id in enumerate(line):
-        cells[i, j] = Cell(id)
-Cell.sync()
-Cell.sync_valid()
+
+Cell.init_cells()
 
 
 def draw_path():
-    target: Cell | None = None
+    target: Cell = cells[0, 0]
     for cell in cells.flat:
-        if cell.is_entry:
+        if cell.is_exit:
             target = cell
+    if target is not None:
+        while not target.is_entry:
+            neighbours: list = [
+                target.go_north,
+                target.go_south,
+                target.go_east,
+                target.go_west,
+            ]
+            for cell in neighbours:
+                if cell is not None and cell.step == target.step - 1:
+                    put_path(
+                        mlx,
+                        win,
+                        cell.y,
+                        cell.x,
+                        int(data["GREEN"], 16),
+                    )
+                    target = cell
+                    break
 
-    i: int = 0
-    next_target: list = [target]
-    if (target is not None):
-        while not target.is_exit:
-            put_path(mlx, win, target.x + 10, target.y + 7, int(data["GREEN"], 16))
-            next_target.remove(target)
-            if len(next_target) == 0:
-                i += 1
-            for cell in [target.lcell, target.tcell, target.rcell, target.bcell]:
-                if cell.step == i + 1:
-                    next_target.append(cell)
-            target = rd.choice(next_target)
+    for line in cells:
+        print("\n")
+        for cell in line:
+            print(cell.step, end=" | ")
+    print("\n\n\n")
+    print(layer_wall)
 
 
 def draw() -> None:
     matrix_init()
 
+    draw_path()
     y: int = -1
     for v in layer_wall[:, :]:
         y += 1
@@ -171,8 +193,8 @@ def draw() -> None:
             put_cell(
                 mlx,
                 win,
-                i * CELL_SIZE + 10,
-                y * CELL_SIZE + 7,
+                i * CELL_SIZE + PADDING_X,
+                y * CELL_SIZE + PADDING_Y,
                 int(data["TURQUOISE"], 16),
                 v,
             )
@@ -181,6 +203,8 @@ def draw() -> None:
 
 
 def loop(param):
+    from path import find
+
     done = np.all(layer_id == layer_id.flat[0])
     if not done:
         destroy_wall()
@@ -188,9 +212,8 @@ def loop(param):
             Cell.sync()
             Cell.sync_valid()
             find(cells, Direction)
-            draw_path()
     else:
-        # m.mlx_clear_window(mlx, win)
+        m.mlx_clear_window(mlx, win)
         draw()
 
 
@@ -209,6 +232,10 @@ def key_hook(keycode, param):
         layer_id = np.arange(0, WIDTH * HEIGHT).reshape(HEIGHT, WIDTH)
         layer_const = np.arange(0, WIDTH * HEIGHT).reshape(HEIGHT, WIDTH)
         layer_wall[:, :] = 0xF
+        Cell.sync()
+        Cell.sync_valid()
+        Cell.init_cells()
+
 
 
 def choose_cell() -> tuple[Cell, Cell]:

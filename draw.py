@@ -10,6 +10,8 @@ m = Mlx()
 
 CELL_SIZE = int(data["CELL_SIZE"])
 WALL_SIZE = int(data["WALL_SIZE"])
+PADDING_X = 10
+PADDING_Y = 7
 
 
 def west(mlx, win, x: int, y: int, color: int):
@@ -37,9 +39,15 @@ def south(mlx, win, x: int, y: int, color: int):
 
 
 def put_path(mlx, win, x: int, y: int, color: int):
-    for i in range(CELL_SIZE // 2):
-        for j in range(CELL_SIZE // 2):
-            m.mlx_pixel_put(mlx, win, x + i + CELL_SIZE // 3, y + j + CELL_SIZE // 3, color)
+    for i in range(CELL_SIZE):
+        for j in range(CELL_SIZE):
+            m.mlx_pixel_put(
+                mlx,
+                win,
+                x * CELL_SIZE + i + PADDING_X,
+                y * CELL_SIZE + j + PADDING_Y,
+                color,
+            )
 
 
 def put_cell(mlx, win, x: int, y: int, color: int, hex: int) -> None:
