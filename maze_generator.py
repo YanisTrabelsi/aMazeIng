@@ -19,6 +19,15 @@ WIN_WIDTH = WIDTH * CELL_SIZE + 20
 WIN_HEIGHT = HEIGHT * CELL_SIZE + 40
 PADDING_X = 10
 PADDING_Y = 7
+PATERN = [
+    "00010111",
+    "00110101",
+    "01010011",
+    "11111100",
+    "00010111",
+]
+PATERN_WIDTH = len(PATERN[0])
+PATERN_HEIGHT = len(PATERN)
 
 m = Mlx()
 mlx = m.mlx_init()
@@ -84,6 +93,7 @@ class Cell:
         self.go_south: Cell | None = None
         self.go_east: Cell | None = None
         self.go_west: Cell | None = None
+        self.is_forty_two: bool = False
         if not self.is_left:
             self.lcell = cells[self.x, self.y - 1]
         if not self.is_right:
@@ -275,14 +285,6 @@ def destroy_wall():
     if direction == Direction.Size.WEST:
         layer_wall[cell1.x, cell1.y] -= Direction.Hex.WEST
         layer_wall[cell2.x, cell2.y] -= Direction.Hex.EAST
-
-    # print(f"\n\n===  ID  ===\n{layer_id}")
-    # print(f"\n=== WALL ===\n{layer_wall}")
-    # print(f"\nCELL1| ({cell1.x}, {cell1.y})|| const= {cell1.const}")
-    # print(cell1.valid_cells)
-    valid_const = [cell.get_const for cell in cell1.valid_cells if cell is not None]
-    # print(f"valid| {valid_const}")
-    # print(f"CELL2| ({cell2.x}, {cell2.y})|| const= {cell2.const}")
 
     for i, line in enumerate(layer_id):
         for j, id in enumerate(line):
