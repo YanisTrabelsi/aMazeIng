@@ -50,6 +50,49 @@ def find(cells: npt.NDArray, Direction):
     step: int = 0
     next_targets: list = [cell_entry]
     target = next_targets[0]
+
+    while not target.is_exit:
+        target.visited = True
+
+        neighbours = [
+            cell
+            for cell in (
+                target.go_north,
+                target.go_south,
+                target.go_east,
+                target.go_west,
+            )
+            if cell is not None and not cell.visited and not cell.is_fourty_two
+        ]
+
+        for cell in neighbours:
+            cell.step = step + 1
+
+        next_targets.remove(target)
+
+        if len(next_targets) == 0:
+            step += 1
+            next_targets = [
+                cell
+                for cell in cells.flat
+                if cell.step == step and not cell.visited and not cell.is_fourty_two
+            ]
+
+            if len(next_targets) == 0:
+                # Aucun chemin vers la sortie
+                return
+
+        target = rd.choice(next_targets)
+
+
+"""
+def find(cells: npt.NDArray, Direction):
+    init_result = init_cells(cells, Direction)
+    cell_entry = init_result[0]
+
+    step: int = 0
+    next_targets: list = [cell_entry]
+    target = next_targets[0]
     i = 0
     while not target.is_exit:
         i += 1
@@ -63,7 +106,9 @@ def find(cells: npt.NDArray, Direction):
                 target.go_east,
                 target.go_west,
             )
-            if cell is not None and cell.visited is False
+            if cell is not None
+            and cell.visited is False
+            and not cell.is_fourty_two
         ]
         for cell in neighbours:
             cell.step = step + 1
@@ -73,8 +118,12 @@ def find(cells: npt.NDArray, Direction):
             next_targets = [
                 cell
                 for cell in cells.flat
-                if cell.step == step and cell.visited is False
+                if cell.step == step
+                and cell.visited is False
+                and not cell.is_fourty_two
             ]
+
         for e in next_targets:
             for cell in cells.flat:
                 target = rd.choice(next_targets)
+"""

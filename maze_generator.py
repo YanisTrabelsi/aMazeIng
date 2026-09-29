@@ -1,3 +1,4 @@
+from path import find
 from mlx import Mlx
 from draw import put_cell, put_path
 import numpy as np
@@ -19,13 +20,16 @@ WIN_WIDTH = WIDTH * CELL_SIZE + 20
 WIN_HEIGHT = HEIGHT * CELL_SIZE + 40
 PADDING_X = 10
 PADDING_Y = 7
-PATERN = [
-    "00010111",
-    "00110101",
-    "01010011",
-    "11111100",
-    "00010111",
-]
+PATERN = np.array(
+    [
+        [0, 0, 0, 1, 0, 1, 1, 1],
+        [0, 0, 1, 1, 0, 1, 0, 1],
+        [0, 1, 0, 1, 0, 0, 1, 1],
+        [1, 1, 1, 1, 1, 1, 0, 0],
+        [0, 0, 0, 1, 0, 1, 1, 1],
+    ]
+)
+
 PATERN_WIDTH = len(PATERN[0])
 PATERN_HEIGHT = len(PATERN)
 
@@ -93,7 +97,7 @@ class Cell:
         self.go_south: Cell | None = None
         self.go_east: Cell | None = None
         self.go_west: Cell | None = None
-        self.is_forty_two: bool = False
+        self.is_fourty_two: bool = False
         if not self.is_left:
             self.lcell = cells[self.x, self.y - 1]
         if not self.is_right:
@@ -111,7 +115,9 @@ class Cell:
                 self.tcell,
                 self.bcell,
             )
-            if cell is not None and cell.get_id != self.get_id
+            if cell is not None
+            and cell.get_id != self.get_id
+            and not cell.is_fourty_two
         ]
 
     @staticmethod
@@ -146,7 +152,11 @@ class Cell:
                         cell.tcell,
                         cell.bcell,
                     )
-                    if subcell is not None and subcell.get_id != cell.get_id
+                    if (
+                        subcell is not None
+                        and subcell.get_id != cell.get_id
+                        and not subcell.is_fourty_two
+                    )
                 ]
 
     @staticmethod
@@ -160,36 +170,51 @@ Cell.init_cells()
 
 
 def draw_path():
-    target: Cell = cells[0, 0]
-    for cell in cells.flat:
-        if cell.is_exit:
-            target = cell
-    if target is not None:
-        while not target.is_entry:
-            neighbours: list = [
-                target.go_north,
-                target.go_south,
-                target.go_east,
-                target.go_west,
-            ]
-            for cell in neighbours:
-                if cell is not None and cell.step == target.step - 1:
-                    put_path(
-                        mlx,
-                        win,
-                        cell.y,
-                        cell.x,
-                        int(data["GREEN"], 16),
-                    )
-                    target = cell
-                    break
+    target = next((cell for cell in cells.flat if cell.is_exit), None)
 
-    for line in cells:
-        print("\n")
-        for cell in line:
-            print(cell.step, end=" | ")
-    print("\n\n\n")
-    print(layer_wall)
+    if target is None:
+        return
+
+    put_path(
+        mlx,
+        win,
+        target.y,
+        target.x,
+        int(data["GREEN"], 16),
+    )
+
+    while not target.is_entry:
+        neighbours = [
+            target.go_north,
+            target.go_south,
+            target.go_east,
+            target.go_west,
+        ]
+
+        previous = next(
+            (
+                cell
+                for cell in neighbours
+                if cell is not None and cell.step == target.step - 1
+            ),
+            None,
+        )
+
+        if previous is None:
+            raise RuntimeError(
+                f"Impossible de remonter le chemin depuis "
+                f"({target.x}, {target.y}), step={target.step}"
+            )
+
+        put_path(
+            mlx,
+            win,
+            previous.y,
+            previous.x,
+            int(data["GREEN"], 16),
+        )
+
+        target = previous
 
 
 def draw() -> None:
@@ -208,26 +233,19 @@ def draw() -> None:
                 int(data["TURQUOISE"], 16),
                 v,
             )
+    for cell in cells.flat:
+        if cell.is_fourty_two:
+            put_path(mlx, win, cell.y, cell.x, int(data["VIOLET"], 16))
     m.mlx_string_put(mlx, win, 10, WIN_HEIGHT - 30, 0xFF0000FF, "[Q]: EXIT")
     m.mlx_string_put(mlx, win, 165, WIN_HEIGHT - 30, 0xFF0000FF, "[R]: RELOAD")
 
 
-def loop(param):
-    from path import find
-
-    done = np.all(layer_id == layer_id.flat[0])
-    if not done:
-        destroy_wall()
-        if np.all(layer_id == layer_id.flat[0]):
-            Cell.sync()
-            Cell.sync_valid()
-            find(cells, Direction)
-    else:
-        m.mlx_clear_window(mlx, win)
-        draw()
+def loop(param) -> None:
+    m.mlx_clear_window(mlx, win)
+    draw()
 
 
-def key_hook(keycode, param):
+def key_hook(keycode, param) -> None:
     if keycode == 113:
         m.mlx_loop_exit(mlx)
     if keycode == 114:
@@ -245,7 +263,18 @@ def key_hook(keycode, param):
         Cell.sync()
         Cell.sync_valid()
         Cell.init_cells()
+        run()
 
+
+def fourty_two():
+    sliced_w: int = (len(cells[0]) - PATERN_WIDTH) // 2
+    sliced_h: int = (len(cells) - PATERN_HEIGHT) // 2
+    center = cells[
+        sliced_h : sliced_h + PATERN_HEIGHT, sliced_w : sliced_w + PATERN_WIDTH
+    ]
+
+    for cell in center[PATERN == 1]:
+        cell.is_fourty_two = True
 
 
 def choose_cell() -> tuple[Cell, Cell]:
@@ -253,12 +282,14 @@ def choose_cell() -> tuple[Cell, Cell]:
     valid_ids: list[Cell] = []
     for line in cells:
         for cell in line:
-            if len(cell.valid_cells) > 0:
+            if len(cell.valid_cells) > 0 and not cell.is_fourty_two:
                 valid_ids.append(cell)
 
     cell1 = rd.choice(valid_ids)
     valid_cells_id: list[int] = [
-        cell.get_const for cell in cell1.valid_cells if cell is not None
+        cell.get_const
+        for cell in cell1.valid_cells
+        if cell is not None and not cell.is_fourty_two
     ]
     cell2 = Cell(rd.choice(valid_cells_id))
     cells[cell1.x, cell1.y] = cell1
@@ -267,6 +298,7 @@ def choose_cell() -> tuple[Cell, Cell]:
 
 
 def destroy_wall():
+    print(f"\n\n{layer_id}")
     Cell.sync()
     Cell.sync_valid()
     cells: tuple[Cell, Cell] = choose_cell()
@@ -292,7 +324,31 @@ def destroy_wall():
                 layer_id[i, j] = cell1.get_id
 
 
+def run():
+    done = False
+    sliced_w: int = (len(cells[0]) - PATERN_WIDTH) // 2
+    sliced_h: int = (len(cells) - PATERN_HEIGHT) // 2
+    center = layer_id[
+        sliced_h : sliced_h + PATERN_HEIGHT, sliced_w : sliced_w + PATERN_WIDTH
+    ]
+    valid_cells = [cell for cell in layer_id.flat if cell not in center.flat]
+
+    fourty_two()
+    while not done:
+        destroy_wall()
+
+        valid_cells = [cell for cell in layer_id.flat if cell not in center.flat]
+
+        done = all(cell == valid_cells[0] for cell in valid_cells)
+
+        if done:
+            Cell.sync()
+            Cell.sync_valid()
+            find(cells, Direction)
+
+
 if __name__ == "__main__":
+    run()
     m.mlx_key_hook(win, key_hook, None)
     m.mlx_loop_hook(mlx, loop, None)
     m.mlx_loop(mlx)
