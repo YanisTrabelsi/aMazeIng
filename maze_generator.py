@@ -9,6 +9,7 @@ import json
 
 with open("data.json") as f:
     data = json.load(f)
+    print(data)
 
 
 rd.seed(data["SEED"])
@@ -20,12 +21,13 @@ WIN_WIDTH = WIDTH * CELL_SIZE + 20
 WIN_HEIGHT = HEIGHT * CELL_SIZE + 40
 PADDING_X = 10
 PADDING_Y = 7
+IS_PERFECT = data["PERFECT"]
 PATERN = np.array(
     [
-        [0, 0, 0, 1, 0, 1, 1, 1],
-        [0, 0, 1, 1, 0, 1, 0, 1],
-        [0, 1, 0, 1, 0, 0, 1, 1],
-        [1, 1, 1, 1, 1, 1, 0, 0],
+        [0, 1, 0, 1, 0, 1, 1, 1],
+        [0, 1, 0, 1, 0, 0, 0, 1],
+        [0, 1, 1, 1, 0, 1, 1, 1],
+        [0, 0, 0, 1, 0, 1, 0, 0],
         [0, 0, 0, 1, 0, 1, 1, 1],
     ]
 )
@@ -298,7 +300,7 @@ def choose_cell() -> tuple[Cell, Cell]:
 
 
 def destroy_wall():
-    print(f"\n\n{layer_id}")
+    #print(f"\n\n{layer_id}")
     Cell.sync()
     Cell.sync_valid()
     cells: tuple[Cell, Cell] = choose_cell()
@@ -324,27 +326,97 @@ def destroy_wall():
                 layer_id[i, j] = cell1.get_id
 
 
-def run():
-    done = False
-    sliced_w: int = (len(cells[0]) - PATERN_WIDTH) // 2
-    sliced_h: int = (len(cells) - PATERN_HEIGHT) // 2
-    center = layer_id[
-        sliced_h : sliced_h + PATERN_HEIGHT, sliced_w : sliced_w + PATERN_WIDTH
-    ]
-    valid_cells = [cell for cell in layer_id.flat if cell not in center.flat]
+def walls(cell: Cell):
+    value = int(layer_wall[cell.x, cell.y])
+    result = []
+    if value & Direction.Hex.NORTH:
+        result.append("NORTH")
+    if value & Direction.Hex.EAST:
+        result.append("EAST")
+    if value & Direction.Hex.SOUTH:
+        result.append("SOUTH")
+    if value & Direction.Hex.WEST:
+        result.append("WEST")
+    return result
 
+
+def choose_cell_2(cell1: Cell) -> tuple[Cell, Cell] | None:
+    wall_of_cell = walls(cell1)
+    if len(wall_of_cell) <= 2:
+        return None
+    candidates = []
+    for direction in wall_of_cell:
+        if direction == "NORTH":
+            if not cell1.is_top and not cell1.tcell.is_fourty_two:
+                candidates.append(cell1.tcell)
+        if direction == "SOUTH":
+            if not cell1.is_bottom and not cell1.bcell.is_fourty_two:
+                candidates.append(cell1.bcell)
+        if direction == "EAST":
+            if not cell1.is_right and not cell1.rcell.is_fourty_two:
+                candidates.append(cell1.rcell)
+        if direction == "WEST":
+            if not cell1.is_left and not cell1.lcell.is_fourty_two:
+                candidates.append(cell1.lcell)
+    if not candidates:
+        return None
+    return (cell1, rd.choice(candidates))
+
+
+def destroy_wall_2(cell_origin: Cell):
+    Cell.sync()
+    Cell.sync_valid()
+    pair: tuple[Cell, Cell] | None = choose_cell_2(cell_origin)
+    if pair is None:
+        return
+    cell1, cell2 = pair[0], pair[1]
+
+    direction = cell2.const - cell1.const
+    if direction == Direction.Size.NORTH:
+        layer_wall[cell1.x, cell1.y] -= Direction.Hex.NORTH
+        layer_wall[cell2.x, cell2.y] -= Direction.Hex.SOUTH
+    if direction == Direction.Size.EAST:
+        layer_wall[cell1.x, cell1.y] -= Direction.Hex.EAST
+        layer_wall[cell2.x, cell2.y] -= Direction.Hex.WEST
+    if direction == Direction.Size.SOUTH:
+        layer_wall[cell1.x, cell1.y] -= Direction.Hex.SOUTH
+        layer_wall[cell2.x, cell2.y] -= Direction.Hex.NORTH
+    if direction == Direction.Size.WEST:
+        layer_wall[cell1.x, cell1.y] -= Direction.Hex.WEST
+        layer_wall[cell2.x, cell2.y] -= Direction.Hex.EAST
+
+    for i, line in enumerate(layer_id):
+        for j, id in enumerate(line):
+            if id == cell2.get_id:
+                layer_id[i, j] = cell1.get_id
+
+
+def run():
     fourty_two()
+    done = False
     while not done:
         destroy_wall()
 
-        valid_cells = [cell for cell in layer_id.flat if cell not in center.flat]
+        ids = set()
+        for cell in cells.flat:
+            if not cell.is_fourty_two:
+                ids.add(layer_id[cell.x, cell.y])
+        done = len(ids) == 1
 
-        done = all(cell == valid_cells[0] for cell in valid_cells)
-
-        if done:
-            Cell.sync()
-            Cell.sync_valid()
-            find(cells, Direction)
+    Cell.sync()
+    Cell.sync_valid()
+    if IS_PERFECT == "False":
+        half = False
+        for cell in cells.flat:
+            #if half:
+                if not cell.is_fourty_two:
+                    destroy_wall_2(cell)
+                #half = False
+            #else:
+                #half = True
+    Cell.sync()
+    Cell.sync_valid()
+    find(cells, Direction)
 
 
 if __name__ == "__main__":
