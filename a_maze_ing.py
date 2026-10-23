@@ -2,7 +2,7 @@ import mazegen as mg
 import sys
 
 
-class MazeGenerationError(Exception):
+class ConfigError(Exception):
     """Exception if the maze can not be generated because of config.txt file"""
 
     def __init__(self, message):
@@ -15,51 +15,80 @@ def redprint(s: str):
 
 def config_parser(file: str) -> dict:
     config_dict: dict[str, str] = {}
-    with open(sys.argv[2], "r") as config:
-        for line in config:
-            striped_line = line.strip()
-            if len(striped_line) == 0:
-                continue
-            if striped_line.startswith("#"):
-                continue
-            text: list[str] = striped_line.split("=")
-            if len(text) != 2:
-                raise MazeGenerationError(
-                    "\033[31mWrong syntaxe, should be 'PERFECT=True' for exemple\033[0m"
-                )
-            config_dict[text[0].strip()] = text[1].strip()
+    try:
+        with open(sys.argv[1], "r") as config:
+            for line_number, line in enumerate(config, start=1):
+                striped_line = line.strip()
+                if striped_line.startswith("#") or striped_line == "":
+                    continue
+                text: list[str] = striped_line.split("=", maxsplit=1)
+                if len(text) != 2:
+                    raise ConfigError(f"[Error] wrong format at line {line_number}. Should be 'KEY=VALUE")
+                key = text[0].strip()
+                if key == "":
+                    raise ConfigError(f"[Error] missing key at line {line_number}")
+                if key in config_dict:
+                    raise ConfigError(f"[Error] duplicate key at line {line_number}")
+                config_dict[key] = text[1].strip()
+    except (FileNotFoundError, IsADirectoryError):
+        redprint("[Error] Wrong config file input")
+    print(config_dict)
     return config_dict
 
 
 def dict_parser(config_dict: dict[str, str]) -> bool:
 
     can_run: bool = True
+    mandatory_config: list[str] = ["WIDTH", "HEIGHT", "ENTRY", "EXIT", "OUTPUT_FILE", "PERFECT"]
 
     try:
+
+        for key in mandatory_config:
+            if key not in config_dict:
+                print(f"{redprint("[Error]")} {key} is missing in the config file")
+                can_run = False
+        if not can_run:
+            return can_run
+
         width: int = int(config_dict["WIDTH"])
         if width < 2 or width > 100:
-            raise MazeGenerationError(
-                "\033[31mWIDTH have to be between 2 and 100\n\033[0m"
-            )
+            raise ConfigError("WIDTH have to be between 2 and 100")
 
-            can_run = False
-    except MazeGenerationError as e:
+        height: int = int(config_dict["HEIGHT"])
+        if height < 2 or height > 100:
+            raise ConfigError("HEIGHT have to be between 2 and 100")
+
+        x, y = config_dict["ENTRY"].split(",")
+        entry: tuple[int, int] = (int(y), int(x))
+        if x < 0 or x >= width:
+            raise ConfigError(f"ENTRY=(x,y): x have to be between 0 and {width - 1}")
+        if y < 0 or y >= height:
+            raise ConfigError(f"ENTRY=(x,y): y have to be between 0 and {height - 1}")
+
+        x, y = config_dict["EXIT"].split(",")
+        exit: tuple[int, int] = (int(y), int(x))
+        if x < 0 or x >= width:
+            raise ConfigError(f"EXIT=(x,y): x have to be between 0 and {width - 1}")
+        if y < 0 or y >= height:
+            raise ConfigError(f"EXIT=(x,y): y have to be between 0 and {height - 1}")
+        if exit == entry:
+            raise ConfigError("Entry and Exit can't be at the same place")
+
+    except ConfigError as e:
         redprint(f"Error: {e}")
-
+        can_run = False
     return can_run
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        redprint("Usage <python3 a_maze_ing.py config.txt>")
-        sys.exit(1)
-    if sys.argv[2] != "config.txt":
+
+    if len(sys.argv) != 2:
         redprint("Usage <python3 a_maze_ing.py config.txt>")
         sys.exit(1)
 
     config_dict: dict[str, str] | None = None
     try:
-        config_dict = config_parser(sys.argv[2])
+        config_dict = config_parser(sys.argv[1])
     except MazeGenerationError as e:
         redprint(f"Error: {e}")
     if config_dict is not None:

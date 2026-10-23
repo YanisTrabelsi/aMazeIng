@@ -97,9 +97,7 @@ class MazeGenerator():
         rd.seed(self.seed)
         self.init_layers()
 
-    # ------------------------------------------------------------------
-    # Layers
-    # ------------------------------------------------------------------
+
     def matrix_init(self):
         grid: npt.NDArray = np.zeros((self.height, self.width, 3))
         return grid
@@ -121,9 +119,7 @@ class MazeGenerator():
         )
         self.init_cells()
 
-    # ------------------------------------------------------------------
-    # Cell.sync / sync_valid / init_cells
-    # ------------------------------------------------------------------
+
     def sync(self) -> None:
         cells = self.cells
         for line in cells:
@@ -167,9 +163,7 @@ class MazeGenerator():
             for j, id in enumerate(line):
                 self.cells[i, j] = self.Cell(self, id)
 
-    # ------------------------------------------------------------------
-    # Generation
-    # ------------------------------------------------------------------
+
     def fourty_two(self) -> None:
         sliced_w: int = (len(self.cells[0]) - self.patern_width) // 2
         sliced_h: int = (len(self.cells) - self.patern_height) // 2
@@ -318,9 +312,7 @@ class MazeGenerator():
         self.init_cells()
         self.run()
 
-    # ------------------------------------------------------------------
-    # path.py: init_cells and find
-    # ------------------------------------------------------------------
+
     def init_path_cells(self) -> tuple:
         entry_cell = None
         exit_cell = None
@@ -398,9 +390,7 @@ class MazeGenerator():
 
             target = rd.choice(next_targets)
 
-    # ------------------------------------------------------------------
-    # draw_path logic, without the drawing: returns the cells instead
-    # ------------------------------------------------------------------
+
     def get_path(self) -> list:
         """Cells of the path, from the exit back to the entry."""
         target = next((cell for cell in self.cells.flat if cell.is_exit), None)
@@ -436,9 +426,7 @@ class MazeGenerator():
             target = previous
         return path
 
-    # ------------------------------------------------------------------
-    # Output (the 'with open' block at the end of the original main)
-    # ------------------------------------------------------------------
+
     def write_output(self, path: str) -> None:
         with open(path, "w") as f:
             for line in self.layer_wall:
