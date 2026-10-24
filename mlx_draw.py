@@ -36,8 +36,8 @@ def put_path(mlx, win, x: int, y: int, color: int):
             m.mlx_pixel_put(
                 mlx,
                 win,
-                x * CELL_SIZE + i,
-                y * CELL_SIZE + j,
+                x * CELL_SIZE + i + 25,
+                y * CELL_SIZE + j + 25,
                 color,
             )
 

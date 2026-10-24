@@ -299,7 +299,7 @@ class MazeGenerator:
         self.sync()
         self.sync_valid()
         self.find()
-        Mlx_handler(self.width, self.height, self.cells)
+        Mlx_handler(self.width, self.height, self.cells, self)
 
     def regenerate(self) -> None:
         """What the 'R' key did in key_hook (no reseed, new maze)."""

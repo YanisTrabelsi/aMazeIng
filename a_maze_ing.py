@@ -139,7 +139,6 @@ if __name__ == "__main__":
         generator.init_cells()
         generator.run()
         generator.write_output(config["output_file"])
-        generator.sync_valid()
     except ConfigError as e:
         print(f"{redprint('[Error]')} {e}")
         sys.exit(1)
