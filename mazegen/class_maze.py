@@ -115,6 +115,7 @@ class MazeGenerator:
         )
         self.layer_wall[:, :] = 0xF
         self.cells: npt.NDArray = np.empty((self.height, self.width), dtype=object)
+
         self.init_cells
 
     def sync(self) -> None:
@@ -277,37 +278,46 @@ class MazeGenerator:
                 if id == cell2.get_id:
                     self.layer_id[i, j] = cell1.get_id
 
-    def run(self) -> None:
-        """Generate the maze, then compute the path (original run())."""
+    def generate(self) -> None:
+        """Generate a new maze without creating a window."""
+        self.init_layers()
+        self.init_cells()
+        self.sync()
+        self.sync_valid()
+
         self.fourty_two()
+
         done = False
         while not done:
             self.destroy_wall()
 
-            ids = set()
-            for cell in self.cells.flat:
-                if not cell.is_fourty_two:
-                    ids.add(self.layer_id[cell.x, cell.y])
-            done = len(ids) == 1
+            ids = {
+                int(self.layer_id[cell.x, cell.y])
+                for cell in self.cells.flat
+                if not cell.is_fourty_two
+            }
+            done = len(ids) <= 1
 
         self.sync()
         self.sync_valid()
+
         if not self.perfect:
             for cell in self.cells.flat:
                 if not cell.is_fourty_two:
                     self.destroy_wall_2(cell)
+
         self.sync()
         self.sync_valid()
         self.find()
+
+    def run(self) -> None:
+        """Generate the maze and start its graphical interface."""
+        self.generate()
         Mlx_handler(self.width, self.height, self.cells, self)
 
     def regenerate(self) -> None:
-        """What the 'R' key did in key_hook (no reseed, new maze)."""
-        self.init_layers()
-        self.sync()
-        self.sync_valid()
-        self.init_cells()
-        self.run()
+        """Generate a new maze without starting another MLX loop."""
+        self.generate()
 
     def init_path_cells(self) -> tuple:
         entry_cell = None
@@ -418,7 +428,7 @@ class MazeGenerator:
         return path
 
     def write_output(self, path: str) -> None:
-        with open(path, "w") as f:
+        with open(path, "a") as f:
             for line in self.layer_wall:
                 for id in line:
                     f.write(hex(int(id))[2:])
