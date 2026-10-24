@@ -399,7 +399,7 @@ class MazeGenerator:
         if target is None:
             return []
 
-        path = [target]
+        path: list = [target]
         while not target.is_entry:
             neighbours = [
                 target.go_north,
@@ -428,11 +428,33 @@ class MazeGenerator:
         return path
 
     def write_output(self, path: str) -> None:
-        with open(path, "a") as f:
+        path_list = self.get_path()
+        path_list.reverse()
+        with open(path, "w") as f:
             for line in self.layer_wall:
                 for id in line:
                     f.write(hex(int(id))[2:])
                 f.write("\n")
+            f.write("\n")
+
+            f.write(f"{str(path_list[0].x)},{str(path_list[0].y)}\n")
+            f.write(f"{str(path_list[-1].y)},{str(path_list[-1].y)}\n")
+
+            i: int = 0
+            for cell in path_list:
+                if cell is path_list[0]:
+                    continue
+                x = cell.x - path_list[i].x
+                y = cell.y - path_list[i].y
+                if x == 1:
+                    f.write("S")
+                elif x == -1:
+                    f.write("N")
+                elif y == 1:
+                    f.write("E")
+                elif y == -1:
+                    f.write("W")
+                i += 1
 
 
 if __name__ == "__main__":

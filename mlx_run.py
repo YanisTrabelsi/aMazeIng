@@ -90,7 +90,6 @@ class Mlx_handler:
                 draw_path(0xFF000000)
 
         def loop(params) -> None:
-
             for cell in generator.cells.flat:
                 put_cell(
                     self.mlx,
