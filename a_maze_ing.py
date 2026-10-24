@@ -135,6 +135,9 @@ if __name__ == "__main__":
             config["entry"],
             config["exit"],
         )
+        generator.matrix_init()
+        generator.init_layers()
+        generator.init_cells()
         generator.run()
         generator.write_output(config["output_file"])
         mlx_hander = Mlx_handler(config["width"], config["height"], generator.cells)

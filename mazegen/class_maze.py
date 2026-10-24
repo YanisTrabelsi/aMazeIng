@@ -168,6 +168,7 @@ class MazeGenerator:
         ]
 
         for cell in center[self.PATERN == 1]:
+            print(center)
             cell.is_fourty_two = True
 
     def choose_cell(self) -> tuple:
