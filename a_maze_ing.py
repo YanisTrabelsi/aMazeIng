@@ -1,5 +1,6 @@
 import mazegen as mg
 import sys
+from typing import Any
 
 
 class ConfigError(Exception):
@@ -16,68 +17,95 @@ def redprint(s: str):
 def config_parser(file: str) -> dict:
     config_dict: dict[str, str] = {}
     try:
-        with open(sys.argv[1], "r") as config:
+        with open(sys.argv[1], "r", encoding="utf-8") as config:
             for line_number, line in enumerate(config, start=1):
                 striped_line = line.strip()
                 if striped_line.startswith("#") or striped_line == "":
                     continue
                 text: list[str] = striped_line.split("=", maxsplit=1)
                 if len(text) != 2:
-                    raise ConfigError(f"[Error] wrong format at line {line_number}. Should be 'KEY=VALUE")
+                    raise ConfigError(f"{redprint('[Error]')} wrong format at line {line_number}. Should be 'KEY=VALUE")
                 key = text[0].strip()
                 if key == "":
-                    raise ConfigError(f"[Error] missing key at line {line_number}")
+                    raise ConfigError(f"{redprint('[Error]')} missing key at line {line_number}")
                 if key in config_dict:
                     raise ConfigError(f"[Error] duplicate key at line {line_number}")
                 config_dict[key] = text[1].strip()
-    except (FileNotFoundError, IsADirectoryError):
-        redprint("[Error] Wrong config file input")
-    print(config_dict)
+    except OSError as error:
+        raise ConfigError(f"{redprint('[Error]')} Cannot read '{file}': {error}")
+    except UnicodeDecodeError as error:
+        raise ConfigError(f"{redprint('[Error]')} error while reading the file: Should be a UTF-8 text file")
     return config_dict
 
 
-def dict_parser(config_dict: dict[str, str]) -> bool:
-
-    can_run: bool = True
-    mandatory_config: list[str] = ["WIDTH", "HEIGHT", "ENTRY", "EXIT", "OUTPUT_FILE", "PERFECT"]
+def parse_int(config_dict: dict[str, str], key: str) -> int:
 
     try:
+        value = int(config_dict[key])
+    except ValueError:
+        raise ConfigError(f"{key} has to be an integer, got '{config_dict[key]}'")
+    if key in ("WIDTH", "HEIGHT"):
+        if value < 2 or value > 100:
+            raise ConfigError(f"{key} has to be between 2 and 100")
+    return value
 
-        for key in mandatory_config:
-            if key not in config_dict:
-                print(f"{redprint("[Error]")} {key} is missing in the config file")
-                can_run = False
-        if not can_run:
-            return can_run
 
-        width: int = int(config_dict["WIDTH"])
-        if width < 2 or width > 100:
-            raise ConfigError("WIDTH have to be between 2 and 100")
+def parse_entry_exit(config_dict: dict[str, str], key: str, width: int, height: int) -> tuple[int, int]:
 
-        height: int = int(config_dict["HEIGHT"])
-        if height < 2 or height > 100:
-            raise ConfigError("HEIGHT have to be between 2 and 100")
+    coordinate = config_dict[key].split(",")
 
-        x, y = config_dict["ENTRY"].split(",")
-        entry: tuple[int, int] = (int(y), int(x))
-        if x < 0 or x >= width:
-            raise ConfigError(f"ENTRY=(x,y): x have to be between 0 and {width - 1}")
-        if y < 0 or y >= height:
-            raise ConfigError(f"ENTRY=(x,y): y have to be between 0 and {height - 1}")
+    if len(coordinate) != 2:
+        raise ConfigError(f"{key} should look like 'x,y', got '{config_dict[key]}'")
 
-        x, y = config_dict["EXIT"].split(",")
-        exit: tuple[int, int] = (int(y), int(x))
-        if x < 0 or x >= width:
-            raise ConfigError(f"EXIT=(x,y): x have to be between 0 and {width - 1}")
-        if y < 0 or y >= height:
-            raise ConfigError(f"EXIT=(x,y): y have to be between 0 and {height - 1}")
-        if exit == entry:
-            raise ConfigError("Entry and Exit can't be at the same place")
+    try:
+        x, y = int(coordinate[0]), int(coordinate[1])
+    except ValueError:
+        raise ConfigError(f"{key} has to contain two integers, got '{config_dict[key]}'")
 
-    except ConfigError as e:
-        redprint(f"Error: {e}")
-        can_run = False
-    return can_run
+    if x < 0 or x >= width:
+        raise ConfigError(f"{key}=(x,y): x has to be between 0 and {width - 1}")
+
+    if y < 0 or y >= height:
+        raise ConfigError(f"{key}=(x,y): y has to be between 0 and {height - 1}")
+
+    return (x, y)
+
+
+def dict_parser(config_dict: dict[str, str]) -> dict[str, Any]:
+
+    mandatory_list: list[str] = ["WIDTH", "HEIGHT", "ENTRY", "EXIT", "OUTPUT_FILE", "PERFECT"]
+    missing_key = [key for key in mandatory_list if key not in config_dict]
+    if missing_key:
+        raise ConfigError(f"missing key(s): {', '.join(missing)}")
+
+    width = parse_int(config_dict, "WIDTH")
+    height = parse_int(config_dict, "HEIGHT")
+    entry = parse_entry_exit(config_dict, "ENTRY", width, height)
+    exit_cell = parse_entry_exit(config_dict, "EXIT", width, height)
+
+    if exit_cell == entry:
+        raise ConfigError("ENTRY and EXIT can't be at the same place")
+
+    if config_dict["PERFECT"] not in ("True", "False"):
+        raise ConfigError(f"PERFECT has to be True or False, got '{config_dict['PERFECT']}'")
+
+    if config_dict["OUTPUT_FILE"] == "":
+        raise ConfigError("OUTPUT_FILE can't be empty")
+
+    seed = None
+    if "SEED" in config_dict:
+        seed = parse_int(config_dict, "SEED")
+
+    return {
+        "width": width,
+        "height": height,
+        "entry": entry,
+        "exit": exit_cell,
+        "perfect": config_dict["PERFECT"] == "True",
+        "seed": seed,
+        "output_file": config_dict["OUTPUT_FILE"],
+    }
+
 
 
 if __name__ == "__main__":
