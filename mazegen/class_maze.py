@@ -5,7 +5,7 @@ import numpy as np
 import numpy.typing as npt
 
 
-class MazeGenerator():
+class MazeGenerator:
     """Maze generator built from the original functions (no MLX)."""
 
     class Hex:
