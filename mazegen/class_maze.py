@@ -324,11 +324,11 @@ class MazeGenerator:
         exit_cell = None
         for cell in self.cells.flat:
             wall: int = cell.get_wall
-            if cell.x == int(self.entry[0]) and cell.y == int(self.entry[1]):
+            if cell.y == int(self.entry[0]) and cell.x == int(self.entry[1]):
                 cell.is_entry = True
                 entry_cell = cell
                 cell.step = 0
-            if cell.x == int(self.exit[0]) and cell.y == int(self.exit[1]):
+            if cell.y == int(self.exit[0]) and cell.x == int(self.exit[1]):
                 cell.is_exit = True
                 exit_cell = cell
 
@@ -387,7 +387,6 @@ class MazeGenerator:
                 ]
 
                 if len(next_targets) == 0:
-                    # Aucun chemin vers la sortie
                     return
 
             target = rd.choice(next_targets)
@@ -438,7 +437,7 @@ class MazeGenerator:
             f.write("\n")
 
             f.write(f"{str(path_list[0].x)},{str(path_list[0].y)}\n")
-            f.write(f"{str(path_list[-1].y)},{str(path_list[-1].y)}\n")
+            f.write(f"{str(path_list[-1].x)},{str(path_list[-1].y)}\n")
 
             i: int = 0
             for cell in path_list:

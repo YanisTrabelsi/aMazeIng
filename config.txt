@@ -3,9 +3,9 @@ WIDTH=15
 # Hauteur du maze
 HEIGHT=15
 # Coordonnes d'entre
-ENTRY=0,2
+ENTRY=1,2
 # Coordonnes de sortie
-EXIT=12,14
+EXIT=7,4
 OUTPUT_FILE=maze.txt
 PERFECT=True
 SEED=42
