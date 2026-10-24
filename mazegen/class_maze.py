@@ -97,7 +97,6 @@ class MazeGenerator:
         rd.seed(self.seed)
         self.init_layers()
 
-
     def matrix_init(self):
         grid: npt.NDArray = np.zeros((self.height, self.width, 3))
         return grid
@@ -114,11 +113,8 @@ class MazeGenerator:
             self.height, self.width
         )
         self.layer_wall[:, :] = 0xF
-        self.cells: npt.NDArray = np.empty(
-            (self.height, self.width), dtype=object
-        )
-        self.init_cells()
-
+        self.cells: npt.NDArray = np.empty((self.height, self.width), dtype=object)
+        self.init_cells
 
     def sync(self) -> None:
         cells = self.cells
@@ -163,13 +159,12 @@ class MazeGenerator:
             for j, id in enumerate(line):
                 self.cells[i, j] = self.Cell(self, id)
 
-
     def fourty_two(self) -> None:
         sliced_w: int = (len(self.cells[0]) - self.patern_width) // 2
         sliced_h: int = (len(self.cells) - self.patern_height) // 2
         center = self.cells[
-            sliced_h: sliced_h + self.patern_height,
-            sliced_w: sliced_w + self.patern_width,
+            sliced_h : sliced_h + self.patern_height,
+            sliced_w : sliced_w + self.patern_width,
         ]
 
         for cell in center[self.PATERN == 1]:
@@ -312,7 +307,6 @@ class MazeGenerator:
         self.init_cells()
         self.run()
 
-
     def init_path_cells(self) -> tuple:
         entry_cell = None
         exit_cell = None
@@ -364,9 +358,7 @@ class MazeGenerator:
                     target.go_east,
                     target.go_west,
                 )
-                if cell is not None
-                and not cell.visited
-                and not cell.is_fourty_two
+                if cell is not None and not cell.visited and not cell.is_fourty_two
             ]
 
             for cell in neighbours:
@@ -379,9 +371,7 @@ class MazeGenerator:
                 next_targets = [
                     cell
                     for cell in self.cells.flat
-                    if cell.step == step
-                    and not cell.visited
-                    and not cell.is_fourty_two
+                    if cell.step == step and not cell.visited and not cell.is_fourty_two
                 ]
 
                 if len(next_targets) == 0:
@@ -389,7 +379,6 @@ class MazeGenerator:
                     return
 
             target = rd.choice(next_targets)
-
 
     def get_path(self) -> list:
         """Cells of the path, from the exit back to the entry."""
@@ -426,7 +415,6 @@ class MazeGenerator:
             target = previous
         return path
 
-
     def write_output(self, path: str) -> None:
         with open(path, "w") as f:
             for line in self.layer_wall:
@@ -436,6 +424,5 @@ class MazeGenerator:
 
 
 if __name__ == "__main__":
-
     maze = MazeGenerator(15, 15, 42, True, (0, 0), (14, 14))
     maze.run()

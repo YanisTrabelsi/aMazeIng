@@ -1,6 +1,6 @@
 from mlx import Mlx
 import numpy.typing as npt
-from .mlx_draw import put_path
+from mlx_draw import put_path
 
 
 class Mlx_handler:

@@ -1,9 +1,11 @@
 import mazegen as mg
+from mlx_run import Mlx_handler
 import sys
 from typing import Any
 
 
 class ConfigError(Exception):
+    pass
 
 
 def redprint(s: str) -> str:
@@ -20,7 +22,9 @@ def config_parser(file: str) -> dict:
                     continue
                 text: list[str] = striped_line.split("=", maxsplit=1)
                 if len(text) != 2:
-                    raise ConfigError(f"wrong format at line {line_number}. Should be 'KEY=VALUE")
+                    raise ConfigError(
+                        f"wrong format at line {line_number}. Should be 'KEY=VALUE"
+                    )
                 key = text[0].strip()
                 if key == "":
                     raise ConfigError(f"missing key at line {line_number}")
@@ -29,7 +33,7 @@ def config_parser(file: str) -> dict:
                 config_dict[key] = text[1].strip()
     except OSError as error:
         raise ConfigError(f"Cannot read '{file}': {error}")
-    except UnicodeDecodeError as error:
+    except UnicodeDecodeError:
         raise ConfigError(f"error while reading the file: Should be a UTF-8 text file")
     return config_dict
 
@@ -39,14 +43,16 @@ def parse_int(config_dict: dict[str, str], key: str) -> int:
     try:
         value = int(config_dict[key])
     except ValueError:
-        raise ConfigError(f"{redprint('[Error]')} {key} has to be an integer, got '{config_dict[key]}'")
+        raise ConfigError(f"{key} has to be an integer, got '{config_dict[key]}'")
     if key in ("WIDTH", "HEIGHT"):
         if value < 2 or value > 100:
-            raise ConfigError(f"{redprint('[Error]')} {key} has to be between 2 and 100")
+            raise ConfigError(f"{key} has to be between 2 and 100")
     return value
 
 
-def parse_entry_exit(config_dict: dict[str, str], key: str, width: int, height: int) -> tuple[int, int]:
+def parse_entry_exit(
+    config_dict: dict[str, str], key: str, width: int, height: int
+) -> tuple[int, int]:
 
     coordinate = config_dict[key].split(",")
 
@@ -56,7 +62,9 @@ def parse_entry_exit(config_dict: dict[str, str], key: str, width: int, height: 
     try:
         x, y = int(coordinate[0]), int(coordinate[1])
     except ValueError:
-        raise ConfigError(f"{key} has to contain two integers, got '{config_dict[key]}'")
+        raise ConfigError(
+            f"{key} has to contain two integers, got '{config_dict[key]}'"
+        )
 
     if x < 0 or x >= width:
         raise ConfigError(f"{key}=(x,y): x has to be between 0 and {width - 1}")
@@ -69,7 +77,14 @@ def parse_entry_exit(config_dict: dict[str, str], key: str, width: int, height: 
 
 def dict_parser(config_dict: dict[str, str]) -> dict[str, Any]:
 
-    mandatory_list: list[str] = ["WIDTH", "HEIGHT", "ENTRY", "EXIT", "OUTPUT_FILE", "PERFECT"]
+    mandatory_list: list[str] = [
+        "WIDTH",
+        "HEIGHT",
+        "ENTRY",
+        "EXIT",
+        "OUTPUT_FILE",
+        "PERFECT",
+    ]
     missing_key = [key for key in mandatory_list if key not in config_dict]
     if missing_key:
         raise ConfigError(f"missing key(s): {', '.join(missing_key)}")
@@ -80,13 +95,15 @@ def dict_parser(config_dict: dict[str, str]) -> dict[str, Any]:
     exit_cell = parse_entry_exit(config_dict, "EXIT", width, height)
 
     if exit_cell == entry:
-        raise ConfigError(f"ENTRY and EXIT can't be at the same place")
+        raise ConfigError("ENTRY and EXIT can't be at the same place")
 
     if config_dict["PERFECT"] not in ("True", "False"):
-        raise ConfigError(f"PERFECT has to be True or False, got '{config_dict['PERFECT']}'")
+        raise ConfigError(
+            f"PERFECT has to be True or False, got '{config_dict['PERFECT']}'"
+        )
 
     if config_dict["OUTPUT_FILE"] == "":
-        raise ConfigError(f"OUTPUT_FILE can't be empty")
+        raise ConfigError("OUTPUT_FILE can't be empty")
 
     seed = None
     if "SEED" in config_dict:
@@ -103,9 +120,7 @@ def dict_parser(config_dict: dict[str, str]) -> dict[str, Any]:
     }
 
 
-
 if __name__ == "__main__":
-
     if len(sys.argv) != 2:
         print(redprint("Usage <python3 a_maze_ing.py config.txt>"))
         sys.exit(1)
@@ -118,10 +133,11 @@ if __name__ == "__main__":
             config["seed"],
             config["perfect"],
             config["entry"],
-            config["exit"]
+            config["exit"],
         )
         generator.run()
         generator.write_output(config["output_file"])
+        mlx_hander = Mlx_handler(config["width"], config["height"], generator.cells)
     except ConfigError as e:
         print(f"{redprint('[Error]')} {e}")
         sys.exit(1)
