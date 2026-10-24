@@ -88,7 +88,7 @@ class MazeGenerator:
         self.seed = seed
         self.perfect = perfect
         self.entry = entry
-        self.exit = exit if exit is not None else (height - 1, width - 1)
+        self.exit = exit if exit is not None else (width - 1, height - 1)
         self.patern_width = len(self.PATERN[0])
         self.patern_height = len(self.PATERN)
         self.size_north = -width
@@ -419,7 +419,7 @@ class MazeGenerator:
             if previous is None:
                 raise RuntimeError(
                     f"Impossible de remonter le chemin depuis "
-                    f"({target.x}, {target.y}), step={target.step}"
+                    f"({target.y}, {target.x}), step={target.step}"
                 )
 
             path.append(previous)
@@ -436,8 +436,8 @@ class MazeGenerator:
                 f.write("\n")
             f.write("\n")
 
-            f.write(f"{str(path_list[0].x)},{str(path_list[0].y)}\n")
-            f.write(f"{str(path_list[-1].x)},{str(path_list[-1].y)}\n")
+            f.write(f"{str(path_list[0].y)},{str(path_list[0].x)}\n")
+            f.write(f"{str(path_list[-1].y)},{str(path_list[-1].x)}\n")
 
             i: int = 0
             for cell in path_list:

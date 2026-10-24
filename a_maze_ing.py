@@ -71,7 +71,7 @@ def parse_entry_exit(
     if y < 0 or y >= height:
         raise ConfigError(f"{key}=(x,y): y has to be between 0 and {height - 1}")
 
-    return (y, x)
+    return (x, y)
 
 
 def dict_parser(config_dict: dict[str, str]) -> dict[str, Any]:
