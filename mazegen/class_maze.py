@@ -3,6 +3,7 @@ from __future__ import annotations
 import random as rd
 import numpy as np
 import numpy.typing as npt
+from mlx_run import Mlx_handler
 
 
 class MazeGenerator:
@@ -168,7 +169,6 @@ class MazeGenerator:
         ]
 
         for cell in center[self.PATERN == 1]:
-            print(center)
             cell.is_fourty_two = True
 
     def choose_cell(self) -> tuple:
@@ -299,6 +299,7 @@ class MazeGenerator:
         self.sync()
         self.sync_valid()
         self.find()
+        Mlx_handler(self.width, self.height, self.cells)
 
     def regenerate(self) -> None:
         """What the 'R' key did in key_hook (no reseed, new maze)."""

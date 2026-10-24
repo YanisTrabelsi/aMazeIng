@@ -1,5 +1,4 @@
 import mazegen as mg
-from mlx_run import Mlx_handler
 import sys
 from typing import Any
 
@@ -140,7 +139,7 @@ if __name__ == "__main__":
         generator.init_cells()
         generator.run()
         generator.write_output(config["output_file"])
-        mlx_hander = Mlx_handler(config["width"], config["height"], generator.cells)
+        generator.sync_valid()
     except ConfigError as e:
         print(f"{redprint('[Error]')} {e}")
         sys.exit(1)
