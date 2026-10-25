@@ -18,6 +18,9 @@ install:
 	python3 -m pip install mlx-*-py3-none-any.whl;
 	python3 -m pip install numpy;
 	rm -rf "$(MLX_REPO)"
+	@echo
+	@echo
+	@printf "\033[32mDépendances installées avec succès ;).\033[0m\n"
 
 run:
 	python3 a_maze_ing.py config.txt

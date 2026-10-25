@@ -465,6 +465,15 @@ class Mlx_handler:
 
         def loop(params) -> None:
             for cell in generator.cells.flat:
+                if cell.is_fourty_two:
+                    put_path(
+                        self.mlx,
+                        self.win,
+                        cell.y,
+                        cell.x,
+                        0xFFDC143C,
+                    )
+                    continue
                 put_cell(
                     self.mlx,
                     self.win,
