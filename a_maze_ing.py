@@ -22,7 +22,8 @@ def config_parser(file: str) -> dict:
                 text: list[str] = striped_line.split("=", maxsplit=1)
                 if len(text) != 2:
                     raise ConfigError(
-                        f"wrong format at line {line_number}. Should be 'KEY=VALUE"
+                        f"wrong format at line \
+                        {line_number}. Should be 'KEY=VALUE"
                     )
                 key = text[0].strip().upper()
                 if key == "":
@@ -33,7 +34,8 @@ def config_parser(file: str) -> dict:
     except OSError as error:
         raise ConfigError(f"Cannot read '{file}': {error}")
     except UnicodeDecodeError:
-        raise ConfigError(f"error while reading the file: Should be a UTF-8 text file")
+        raise ConfigError("error while reading the file: \
+                            Should be a UTF-8 text file")
     return config_dict
 
 
@@ -42,7 +44,8 @@ def parse_int(config_dict: dict[str, str], key: str) -> int:
     try:
         value = int(config_dict[key])
     except ValueError:
-        raise ConfigError(f"{key} has to be an integer, got '{config_dict[key]}'")
+        raise ConfigError(f"{key} has to be an integer, \
+                            got '{config_dict[key]}'")
     if key in ("WIDTH".lower(), "HEIGHT".lower()):
         if value < 2 or value > 100:
             raise ConfigError(f"{key} has to be between 2 and 100")
@@ -50,13 +53,14 @@ def parse_int(config_dict: dict[str, str], key: str) -> int:
 
 
 def parse_entry_exit(
-    config_dict: dict[str, str], key: str, width: int, height: int
+    config_dict: dict[str, str], key: str
 ) -> tuple[int, int]:
 
     coordinate = config_dict[key].split(",")
 
     if len(coordinate) != 2:
-        raise ConfigError(f"{key} should look like 'x,y', got '{config_dict[key]}'")
+        raise ConfigError(f"{key} should look like 'x,y', \
+                            got '{config_dict[key]}'")
 
     try:
         x, y = int(coordinate[0]), int(coordinate[1])
@@ -82,8 +86,8 @@ def dict_parser(config_dict: dict[str, str]) -> dict[str, Any]:
 
     width = parse_int(config_dict, "WIDTH")
     height = parse_int(config_dict, "HEIGHT")
-    entry = parse_entry_exit(config_dict, "ENTRY", width, height)
-    exit_cell = parse_entry_exit(config_dict, "EXIT", width, height)
+    entry = parse_entry_exit(config_dict, "ENTRY")
+    exit_cell = parse_entry_exit(config_dict, "EXIT")
 
     if config_dict["PERFECT"].upper() not in ("TRUE", "FALSE"):
         raise ConfigError(
@@ -91,7 +95,8 @@ def dict_parser(config_dict: dict[str, str]) -> dict[str, Any]:
         )
     if config_dict["SHOW_FORTY_TWO"].upper() not in ("TRUE", "FALSE"):
         raise ConfigError(
-            f"SHOW_FORTY_TWO has to be True or False, got '{config_dict['SHOW_FORTY_TWO']}'"
+            f"SHOW_FORTY_TWO has to be True or False, \
+            got '{config_dict['SHOW_FORTY_TWO']}'"
         )
 
     if config_dict["OUTPUT_FILE"] == "":

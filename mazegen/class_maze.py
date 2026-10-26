@@ -98,15 +98,16 @@ class MazeGenerator:
         self.entry = entry
         if self.entry[0] >= self.width or self.entry[1] >= self.height:
             self.is_instanciable = False
-            print("\033[31m[Error]\033[0m : maze entry does not fit in the maze")
+            print("\033[31m[Error]\033[0m maze entry does not fit in the maze")
         self.exit = exit if exit is not None else (width - 1, height - 1)
         if self.exit[0] >= self.width or self.exit[1] >= self.height:
             self.is_instanciable = False
-            print("\033[31m[Error]\033[0m : maze exit does not fit in the maze")
+            print("\033[31m[Error]\033[0m maze exit does not fit in the maze")
         elif self.exit[0] == self.entry[0] and self.exit[1] == self.entry[1]:
             self.is_instanciable = False
             print(
-                "\033[31m[Error]\033[0m : entry and exit can not be at the same coordinates"
+                "\033[31m[Error]\033[0m entry and exit \
+                can not be at the same coordinates"
             )
         self.show_fourty_two = show_forty_two
         self.patern_width = len(self.PATERN[0])
@@ -134,7 +135,8 @@ class MazeGenerator:
             self.height, self.width
         )
         self.layer_wall[:, :] = 0xF
-        self.cells: npt.NDArray = np.empty((self.height, self.width), dtype=object)
+        self.cells: npt.NDArray = np.empty((self.height,
+                                            self.width), dtype=object)
 
         self._init_cells
 
@@ -185,8 +187,8 @@ class MazeGenerator:
         sliced_w: int = (len(self.cells[0]) - self.patern_width) // 2
         sliced_h: int = (len(self.cells) - self.patern_height) // 2
         center = self.cells[
-            sliced_h : sliced_h + self.patern_height,
-            sliced_w : sliced_w + self.patern_width,
+            sliced_h: sliced_h + self.patern_height,
+            sliced_w: sliced_w + self.patern_width,
         ]
 
         for cell in center[self.PATERN == 1]:
@@ -309,17 +311,20 @@ class MazeGenerator:
             self.fourty_two()
         elif self.show_fourty_two and (self.width < 9 or self.height < 7):
             print(
-                "\033[33m[NOTICE]\033[0m : 42 motif has been hidded, maze dimensions are too small"
+                "\033[33m[NOTICE]\033[0m 42 motif has been hidded, \
+                maze dimensions are too small"
             )
         for cell in self.cells.flat:
             if cell.y == int(self.entry[0]) and cell.x == int(self.entry[1]):
                 if cell.is_fourty_two:
-                    print("\033[031m[Error]\033[0m Entry or/and exit is on the 42 logo")
+                    print("\033[031m[Error]\033[0m Entry or/and \
+                            exit is on the 42 logo")
                     self.is_instanciable = False
                     return
             if cell.y == int(self.exit[0]) and cell.x == int(self.exit[1]):
                 if cell.is_fourty_two:
-                    print("\033[031m[Error]\033[0m Entry or/and exit is on the 42 logo")
+                    print("\033[031m[Error]\033[0m Entry or/and \
+                            exit is on the 42 logo")
                     self.is_instanciable = False
                     return
         done = False
@@ -350,10 +355,11 @@ class MazeGenerator:
         if self.is_instanciable:
             self._generate()
             if self.is_instanciable:
-                Mlx_handler(self.width, self.height, self.cells, self)
+                Mlx_handler(self.width, self.height, self)
         else:
             print(
-                f"\033[31m[Error]\033[0m : The maze failed to generate, one or more of its arguments are incorrect"
+                "\033[31m[Error]\033[0m The maze failed to generate, \
+                    one or more of its arguments are incorrect"
             )
 
     def _regenerate(self) -> None:
@@ -411,7 +417,8 @@ class MazeGenerator:
                     target.go_east,
                     target.go_west,
                 )
-                if cell is not None and not cell.visited and not cell.is_fourty_two
+                if cell is not None and not cell.visited
+                and not cell.is_fourty_two
             ]
 
             for cell in neighbours:
@@ -424,7 +431,8 @@ class MazeGenerator:
                 next_targets = [
                     cell
                     for cell in self.cells.flat
-                    if cell.step == step and not cell.visited and not cell.is_fourty_two
+                    if cell.step == step and not cell.visited
+                    and not cell.is_fourty_two
                 ]
 
                 if len(next_targets) == 0:
@@ -436,7 +444,8 @@ class MazeGenerator:
         """Cells of the path, from the exit back to the entry."""
         path: list = []
         if self.is_instanciable:
-            target = next((cell for cell in self.cells.flat if cell.is_exit), None)
+            target = next((cell for cell in self.cells.flat
+                          if cell.is_exit), None)
 
             if target is None:
                 return []

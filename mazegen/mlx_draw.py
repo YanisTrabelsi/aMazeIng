@@ -21,13 +21,23 @@ def north(mlx, win, x: int, y: int, color: int):
 def east(mlx, win, x: int, y: int, color: int):
     for i in range(CELL_SIZE):
         for j in range(WALL_SIZE):
-            m.mlx_pixel_put(mlx, win, j + x + CELL_SIZE - WALL_SIZE, i + y, color)
+            m.mlx_pixel_put(mlx,
+                            win,
+                            j + x + CELL_SIZE - WALL_SIZE,
+                            i + y,
+                            color
+                            )
 
 
 def south(mlx, win, x: int, y: int, color: int):
     for i in range(WALL_SIZE):
         for j in range(CELL_SIZE):
-            m.mlx_pixel_put(mlx, win, j + x, i + y + CELL_SIZE - WALL_SIZE, color)
+            m.mlx_pixel_put(mlx,
+                            win,
+                            j + x,
+                            i + y + CELL_SIZE - WALL_SIZE,
+                            color
+                            )
 
 
 def put_path(mlx, win, x: int, y: int, color: int):
@@ -40,6 +50,7 @@ def put_path(mlx, win, x: int, y: int, color: int):
                 y * CELL_SIZE + j + 40,
                 color,
             )
+
 
 def put_42(mlx, win, x: int, y: int, color: int):
     for i in range(CELL_SIZE):

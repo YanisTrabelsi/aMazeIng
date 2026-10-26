@@ -1,5 +1,4 @@
 from mlx import Mlx
-import numpy.typing as npt
 from .mlx_draw import put_cell, put_path, put_42
 import random as rd
 
@@ -9,7 +8,6 @@ class Mlx_handler:
         self,
         width: int,
         height: int,
-        cells: npt.NDArray,
         generator,
     ) -> None:
         self.width = width
@@ -480,7 +478,7 @@ class Mlx_handler:
         is_draw: bool = False
         is_path: bool = True
 
-        def key_hook(keycode, param) -> None:
+        def key_hook(keycode, params) -> None:
             nonlocal is_draw
             nonlocal is_path
             if keycode == 48:  # 0
@@ -494,10 +492,8 @@ class Mlx_handler:
             elif keycode == 50:  # 2
                 if is_path:
                     draw_path(0xFF00FF00)
-                    #is_draw = False
                 else:
                     draw_path(0xFF000000)
-                    #is_draw = False
                 is_path = not is_path
 
             elif keycode == 51:  # 3

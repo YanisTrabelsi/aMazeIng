@@ -22,6 +22,7 @@ install:
 	$(PIP) install -q mlx-*-py3-none-any.whl > /dev/null; \
 	$(PIP) install -q numpy > /dev/null; \
 	$(PIP) install -q flake8 > /dev/null; \
+	$(PIP) install -q mypy > /dev/null; \
 	echo; \
 	printf "\033[32mDépendances installées avec succès.\033[0m\n"
 
@@ -44,6 +45,7 @@ lint-strict:
 clean:
 	rm -rf "$(MLX_REPO)"
 	rm -rf __pycache__
+	rm -rf .mypy_cache
 	rm -rf */__pycache__
 	rm -rf maze.txt
 	rm -rf "$(VENV)"
