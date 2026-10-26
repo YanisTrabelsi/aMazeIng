@@ -3,7 +3,7 @@ from __future__ import annotations
 import random as rd
 import numpy as np
 import numpy.typing as npt
-from mlx_run import Mlx_handler
+from .mlx_run import Mlx_handler
 
 
 class MazeGenerator:
@@ -82,6 +82,7 @@ class MazeGenerator:
         perfect: bool = True,
         entry: tuple[int, int] = (0, 0),
         exit: tuple[int, int] | None = None,
+        show_forty_two: bool = True,
     ):
         self.width = width
         self.height = height
@@ -89,6 +90,7 @@ class MazeGenerator:
         self.perfect = perfect
         self.entry = entry
         self.exit = exit if exit is not None else (width - 1, height - 1)
+        self.show_fourty_two = show_forty_two
         self.patern_width = len(self.PATERN[0])
         self.patern_height = len(self.PATERN)
         self.size_north = -width
@@ -96,14 +98,14 @@ class MazeGenerator:
         self.size_south = width
         self.size_west = -1
         rd.seed(self.seed)
-        self.init_layers()
+        self._init_layers()
 
-    def matrix_init(self):
+    def _matrix_init(self):
         grid: npt.NDArray = np.zeros((self.height, self.width, 3))
         return grid
 
-    def init_layers(self) -> None:
-        self.grid = self.matrix_init()
+    def _init_layers(self) -> None:
+        self.grid = self._matrix_init()
         self.layer_id = self.grid[:, :, 0]
         self.layer_const = self.grid[:, :, 1]
         self.layer_wall = self.grid[:, :, 2]
@@ -116,9 +118,9 @@ class MazeGenerator:
         self.layer_wall[:, :] = 0xF
         self.cells: npt.NDArray = np.empty((self.height, self.width), dtype=object)
 
-        self.init_cells
+        self._init_cells
 
-    def sync(self) -> None:
+    def _sync(self) -> None:
         cells = self.cells
         for line in cells:
             for cell in line:
@@ -138,7 +140,7 @@ class MazeGenerator:
                 if not cell.is_bottom:
                     cell.bcell = cells[cell.x + 1, cell.y]
 
-    def sync_valid(self) -> None:
+    def _sync_valid(self) -> None:
         for line in self.cells:
             for cell in line:
                 cell.valid_cells = [
@@ -156,7 +158,7 @@ class MazeGenerator:
                     )
                 ]
 
-    def init_cells(self) -> None:
+    def _init_cells(self) -> None:
         for i, line in enumerate(self.layer_const):
             for j, id in enumerate(line):
                 self.cells[i, j] = self.Cell(self, id)
@@ -172,7 +174,7 @@ class MazeGenerator:
         for cell in center[self.PATERN == 1]:
             cell.is_fourty_two = True
 
-    def choose_cell(self) -> tuple:
+    def _choose_cell(self) -> tuple:
         """Instanciate two Cell with different ID from layer_id"""
         valid_ids: list = []
         for line in self.cells:
@@ -191,10 +193,10 @@ class MazeGenerator:
         self.cells[cell2.x, cell2.y] = cell2
         return (cell1, cell2)
 
-    def destroy_wall(self) -> None:
-        self.sync()
-        self.sync_valid()
-        cells: tuple = self.choose_cell()
+    def _destroy_wall(self) -> None:
+        self._sync()
+        self._sync_valid()
+        cells: tuple = self._choose_cell()
         cell1, cell2 = cells[0], cells[1]
 
         direction = cell2.const - cell1.const
@@ -216,7 +218,7 @@ class MazeGenerator:
                 if id == cell2.get_id:
                     self.layer_id[i, j] = cell1.get_id
 
-    def walls(self, cell) -> list:
+    def _walls(self, cell) -> list:
         value = int(self.layer_wall[cell.x, cell.y])
         result = []
         if value & self.Hex.NORTH:
@@ -229,8 +231,8 @@ class MazeGenerator:
             result.append("WEST")
         return result
 
-    def choose_cell_2(self, cell1) -> tuple | None:
-        wall_of_cell = self.walls(cell1)
+    def _choose_cell_2(self, cell1) -> tuple | None:
+        wall_of_cell = self._walls(cell1)
         if len(wall_of_cell) <= 2:
             return None
         candidates = []
@@ -251,10 +253,10 @@ class MazeGenerator:
             return None
         return (cell1, rd.choice(candidates))
 
-    def destroy_wall_2(self, cell_origin) -> None:
-        self.sync()
-        self.sync_valid()
-        pair = self.choose_cell_2(cell_origin)
+    def _destroy_wall_2(self, cell_origin) -> None:
+        self._sync()
+        self._sync_valid()
+        pair = self._choose_cell_2(cell_origin)
         if pair is None:
             return
         cell1, cell2 = pair[0], pair[1]
@@ -278,18 +280,19 @@ class MazeGenerator:
                 if id == cell2.get_id:
                     self.layer_id[i, j] = cell1.get_id
 
-    def generate(self) -> None:
+    def _generate(self) -> None:
         """Generate a new maze without creating a window."""
-        self.init_layers()
-        self.init_cells()
-        self.sync()
-        self.sync_valid()
+        self._init_layers()
+        self._init_cells()
+        self._sync()
+        self._sync_valid()
 
-        self.fourty_two()
+        if self.width >= 9 and self.height >= 7 and self.show_fourty_two:
+            self.fourty_two()
 
         done = False
         while not done:
-            self.destroy_wall()
+            self._destroy_wall()
 
             ids = {
                 int(self.layer_id[cell.x, cell.y])
@@ -298,28 +301,28 @@ class MazeGenerator:
             }
             done = len(ids) <= 1
 
-        self.sync()
-        self.sync_valid()
+        self._sync()
+        self._sync_valid()
 
         if not self.perfect:
             for cell in self.cells.flat:
                 if not cell.is_fourty_two:
-                    self.destroy_wall_2(cell)
+                    self._destroy_wall_2(cell)
 
-        self.sync()
-        self.sync_valid()
-        self.find()
+        self._sync()
+        self._sync_valid()
+        self._find()
 
     def run(self) -> None:
         """Generate the maze and start its graphical interface."""
-        self.generate()
+        self._generate()
         Mlx_handler(self.width, self.height, self.cells, self)
 
-    def regenerate(self) -> None:
+    def _regenerate(self) -> None:
         """Generate a new maze without starting another MLX loop."""
-        self.generate()
+        self._generate()
 
-    def init_path_cells(self) -> tuple:
+    def _init_path_cells(self) -> tuple:
         entry_cell = None
         exit_cell = None
         for cell in self.cells.flat:
@@ -351,8 +354,8 @@ class MazeGenerator:
 
         return (entry_cell, exit_cell)
 
-    def find(self) -> None:
-        init_result = self.init_path_cells()
+    def _find(self) -> None:
+        init_result = self._init_path_cells()
         cell_entry = init_result[0]
 
         step: int = 0
@@ -391,7 +394,7 @@ class MazeGenerator:
 
             target = rd.choice(next_targets)
 
-    def get_path(self) -> list:
+    def _get_path(self) -> list:
         """Cells of the path, from the exit back to the entry."""
         target = next((cell for cell in self.cells.flat if cell.is_exit), None)
 
@@ -427,7 +430,7 @@ class MazeGenerator:
         return path
 
     def write_output(self, path: str) -> None:
-        path_list = self.get_path()
+        path_list = self._get_path()
         path_list.reverse()
         with open(path, "w") as f:
             for line in self.layer_wall:

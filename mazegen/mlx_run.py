@@ -1,6 +1,6 @@
 from mlx import Mlx
 import numpy.typing as npt
-from mlx_draw import put_cell, put_path
+from .mlx_draw import put_cell, put_path
 import random as rd
 
 
@@ -452,7 +452,7 @@ class Mlx_handler:
 
             elif keycode == 49:  # 1
                 self.m.mlx_clear_window(self.mlx, self.win)
-                generator.regenerate()
+                generator._regenerate()
 
             elif keycode == 50:  # 2
                 draw_path(0xFF00FF00)

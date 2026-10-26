@@ -43,5 +43,8 @@ lint-strict:
 clean:
 	rm -rf "$(MLX_REPO)"
 	rm -rf __pycache__
+	rm -rf */__pycache__
 	rm -rf maze.txt
 	rm -rf "$(VENV)"
+	rm -rf *.egg-info
+	rm -rf dist/

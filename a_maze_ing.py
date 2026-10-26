@@ -24,7 +24,7 @@ def config_parser(file: str) -> dict:
                     raise ConfigError(
                         f"wrong format at line {line_number}. Should be 'KEY=VALUE"
                     )
-                key = text[0].strip()
+                key = text[0].strip().upper()
                 if key == "":
                     raise ConfigError(f"missing key at line {line_number}")
                 if key in config_dict:
@@ -43,7 +43,7 @@ def parse_int(config_dict: dict[str, str], key: str) -> int:
         value = int(config_dict[key])
     except ValueError:
         raise ConfigError(f"{key} has to be an integer, got '{config_dict[key]}'")
-    if key in ("WIDTH", "HEIGHT"):
+    if key in ("WIDTH".lower(), "HEIGHT".lower()):
         if value < 2 or value > 100:
             raise ConfigError(f"{key} has to be between 2 and 100")
     return value
@@ -75,7 +75,6 @@ def parse_entry_exit(
 
 
 def dict_parser(config_dict: dict[str, str]) -> dict[str, Any]:
-
     mandatory_list: list[str] = [
         "WIDTH",
         "HEIGHT",
@@ -96,9 +95,13 @@ def dict_parser(config_dict: dict[str, str]) -> dict[str, Any]:
     if exit_cell == entry:
         raise ConfigError("ENTRY and EXIT can't be at the same place")
 
-    if config_dict["PERFECT"] not in ("True", "False"):
+    if config_dict["PERFECT"].upper() not in ("TRUE", "FALSE"):
         raise ConfigError(
             f"PERFECT has to be True or False, got '{config_dict['PERFECT']}'"
+        )
+    if config_dict["SHOW_FORTY_TWO"].upper() not in ("TRUE", "FALSE"):
+        raise ConfigError(
+            f"SHOW_FORTY_TWO has to be True or False, got '{config_dict['SHOW_FORTY_TWO']}'"
         )
 
     if config_dict["OUTPUT_FILE"] == "":
@@ -113,9 +116,10 @@ def dict_parser(config_dict: dict[str, str]) -> dict[str, Any]:
         "height": height,
         "entry": entry,
         "exit": exit_cell,
-        "perfect": config_dict["PERFECT"] == "True",
+        "perfect": config_dict["PERFECT"].upper() == "TRUE",
         "seed": seed,
         "output_file": config_dict["OUTPUT_FILE"],
+        "show_forty_two": config_dict["SHOW_FORTY_TWO"].upper() == "TRUE",
     }
 
 
@@ -133,10 +137,11 @@ if __name__ == "__main__":
             config["perfect"],
             config["entry"],
             config["exit"],
+            config["show_forty_two"],
         )
-        generator.matrix_init()
-        generator.init_layers()
-        generator.init_cells()
+        generator._matrix_init()
+        generator._init_layers()
+        generator._init_cells()
         generator.run()
         generator.write_output(config["output_file"])
     except ConfigError as e:
