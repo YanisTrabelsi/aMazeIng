@@ -17,6 +17,8 @@ class Mlx_handler:
         self.cell_size = 40
         self.wall_size = 2
         self.win_width = width * self.cell_size + 50
+        if width < 15:
+            self.win_width = 15 * self.cell_size + 50
         self.win_height = height * self.cell_size + 80
         self.color = 0xFF40E0D0
 
@@ -446,24 +448,7 @@ class Mlx_handler:
                 )
                 target = previous
 
-        def key_hook(keycode, param) -> None:
-            if keycode == 48:  # 0
-                self.m.mlx_loop_exit(self.mlx)
-
-            elif keycode == 49:  # 1
-                self.m.mlx_clear_window(self.mlx, self.win)
-                generator._regenerate()
-
-            elif keycode == 50:  # 2
-                draw_path(0xFF00FF00)
-
-            elif keycode == 51:  # 3
-                draw_path(0xFF000000)
-            elif keycode == 52:  # 4
-                self.color = rd.choice(list(self.colors.values()))
-                self.m.mlx_clear_window(self.mlx, self.win)
-
-        def loop(params) -> None:
+        def draw():
             for cell in generator.cells.flat:
                 if cell.is_fourty_two:
                     put_path(
@@ -491,6 +476,37 @@ class Mlx_handler:
                 0xFF0000FF,
                 "[0]: EXIT [1]: RELOAD [2]: SHOW PATH [3]: HIDE PATH [4]: COLOR",
             )
+
+        is_draw: bool = False
+
+        def key_hook(keycode, param) -> None:
+            nonlocal is_draw
+            if keycode == 48:  # 0
+                self.m.mlx_loop_exit(self.mlx)
+
+            elif keycode == 49:  # 1
+                self.m.mlx_clear_window(self.mlx, self.win)
+                generator._regenerate()
+                is_draw = False
+
+            elif keycode == 50:  # 2
+                draw_path(0xFF00FF00)
+                is_draw = False
+
+            elif keycode == 51:  # 3
+                draw_path(0xFF000000)
+                is_draw = False
+
+            elif keycode == 52:  # 4
+                self.color = rd.choice(list(self.colors.values()))
+                self.m.mlx_clear_window(self.mlx, self.win)
+                is_draw = False
+
+        def loop(params) -> None:
+            nonlocal is_draw
+            if not is_draw:
+                draw()
+                is_draw = True
 
         self.m.mlx_key_hook(self.win, key_hook, self)
         self.m.mlx_loop_hook(self.mlx, loop, None)

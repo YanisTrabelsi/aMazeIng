@@ -64,13 +64,6 @@ def parse_entry_exit(
         raise ConfigError(
             f"{key} has to contain two integers, got '{config_dict[key]}'"
         )
-
-    if x < 0 or x >= width:
-        raise ConfigError(f"{key}=(x,y): x has to be between 0 and {width - 1}")
-
-    if y < 0 or y >= height:
-        raise ConfigError(f"{key}=(x,y): y has to be between 0 and {height - 1}")
-
     return (x, y)
 
 
@@ -91,9 +84,6 @@ def dict_parser(config_dict: dict[str, str]) -> dict[str, Any]:
     height = parse_int(config_dict, "HEIGHT")
     entry = parse_entry_exit(config_dict, "ENTRY", width, height)
     exit_cell = parse_entry_exit(config_dict, "EXIT", width, height)
-
-    if exit_cell == entry:
-        raise ConfigError("ENTRY and EXIT can't be at the same place")
 
     if config_dict["PERFECT"].upper() not in ("TRUE", "FALSE"):
         raise ConfigError(

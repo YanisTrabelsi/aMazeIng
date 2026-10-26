@@ -7,7 +7,7 @@ from .mlx_run import Mlx_handler
 
 
 class MazeGenerator:
-    """Maze generator built from the original functions (no MLX)."""
+    """Generate a Maze with MLX module"""
 
     class Hex:
         NORTH = 1
@@ -84,12 +84,30 @@ class MazeGenerator:
         exit: tuple[int, int] | None = None,
         show_forty_two: bool = True,
     ):
+        self.is_instanciable: bool = True
         self.width = width
+        if self.width < 2:
+            self.is_instanciable = False
+            print("\033[31m[Error]\033[0m : maze width should be >= 2")
         self.height = height
+        if self.height < 2:
+            self.is_instanciable = False
+            print("\033[31m[Error]\033[0m : maze height should be >= 2")
         self.seed = seed
         self.perfect = perfect
         self.entry = entry
+        if self.entry[0] >= self.width or self.entry[1] >= self.height:
+            self.is_instanciable = False
+            print("\033[31m[Error]\033[0m : maze entry does not fit in the maze")
         self.exit = exit if exit is not None else (width - 1, height - 1)
+        if self.exit[0] >= self.width or self.exit[1] >= self.height:
+            self.is_instanciable = False
+            print("\033[31m[Error]\033[0m : maze exit does not fit in the maze")
+        elif self.exit[0] == self.entry[0] and self.exit[1] == self.entry[1]:
+            self.is_instanciable = False
+            print(
+                "\033[31m[Error]\033[0m : entry and exit can not be at the same coordinates"
+            )
         self.show_fourty_two = show_forty_two
         self.patern_width = len(self.PATERN[0])
         self.patern_height = len(self.PATERN)
@@ -289,6 +307,10 @@ class MazeGenerator:
 
         if self.width >= 9 and self.height >= 7 and self.show_fourty_two:
             self.fourty_two()
+        elif self.show_fourty_two and (self.width < 9 or self.height < 7):
+            print(
+                "\033[33m[NOTICE]\033[0m : 42 motif has been hidded, maze dimensions are too small"
+            )
 
         done = False
         while not done:
@@ -315,8 +337,13 @@ class MazeGenerator:
 
     def run(self) -> None:
         """Generate the maze and start its graphical interface."""
-        self._generate()
-        Mlx_handler(self.width, self.height, self.cells, self)
+        if self.is_instanciable:
+            self._generate()
+            Mlx_handler(self.width, self.height, self.cells, self)
+        else:
+            print(
+                f"\033[31m[Error]\033[0m : The maze failed to generate, one or more of its arguments are incorrect"
+            )
 
     def _regenerate(self) -> None:
         """Generate a new maze without starting another MLX loop."""
@@ -396,69 +423,67 @@ class MazeGenerator:
 
     def _get_path(self) -> list:
         """Cells of the path, from the exit back to the entry."""
-        target = next((cell for cell in self.cells.flat if cell.is_exit), None)
+        path: list = []
+        if self.is_instanciable:
+            target = next((cell for cell in self.cells.flat if cell.is_exit), None)
 
-        if target is None:
-            return []
+            if target is None:
+                return []
 
-        path: list = [target]
-        while not target.is_entry:
-            neighbours = [
-                target.go_north,
-                target.go_south,
-                target.go_east,
-                target.go_west,
-            ]
+            path = [target]
+            while not target.is_entry:
+                neighbours = [
+                    target.go_north,
+                    target.go_south,
+                    target.go_east,
+                    target.go_west,
+                ]
 
-            previous = next(
-                (
-                    cell
-                    for cell in neighbours
-                    if cell is not None and cell.step == target.step - 1
-                ),
-                None,
-            )
-
-            if previous is None:
-                raise RuntimeError(
-                    f"Impossible de remonter le chemin depuis "
-                    f"({target.y}, {target.x}), step={target.step}"
+                previous = next(
+                    (
+                        cell
+                        for cell in neighbours
+                        if cell is not None and cell.step == target.step - 1
+                    ),
+                    None,
                 )
 
-            path.append(previous)
-            target = previous
+                if previous is None:
+                    raise RuntimeError(
+                        f"Impossible de remonter le chemin depuis "
+                        f"({target.y}, {target.x}), step={target.step}"
+                    )
+
+                path.append(previous)
+                target = previous
         return path
 
     def write_output(self, path: str) -> None:
-        path_list = self._get_path()
-        path_list.reverse()
-        with open(path, "w") as f:
-            for line in self.layer_wall:
-                for id in line:
-                    f.write(hex(int(id))[2:])
+        if self.is_instanciable:
+            path_list = self._get_path()
+            path_list.reverse()
+            with open(path, "w") as f:
+                for line in self.layer_wall:
+                    for id in line:
+                        f.write(hex(int(id))[2:])
+                    f.write("\n")
                 f.write("\n")
-            f.write("\n")
 
-            f.write(f"{str(path_list[0].y)},{str(path_list[0].x)}\n")
-            f.write(f"{str(path_list[-1].y)},{str(path_list[-1].x)}\n")
+                f.write(f"{str(path_list[0].y)},{str(path_list[0].x)}\n")
+                f.write(f"{str(path_list[-1].y)},{str(path_list[-1].x)}\n")
 
-            i: int = 0
-            for cell in path_list:
-                if cell is path_list[0]:
-                    continue
-                x = cell.x - path_list[i].x
-                y = cell.y - path_list[i].y
-                if x == 1:
-                    f.write("S")
-                elif x == -1:
-                    f.write("N")
-                elif y == 1:
-                    f.write("E")
-                elif y == -1:
-                    f.write("W")
-                i += 1
-
-
-if __name__ == "__main__":
-    maze = MazeGenerator(15, 15, 42, True, (0, 0), (14, 14))
-    maze.run()
+                i: int = 0
+                for cell in path_list:
+                    if cell is path_list[0]:
+                        continue
+                    x = cell.x - path_list[i].x
+                    y = cell.y - path_list[i].y
+                    if x == 1:
+                        f.write("S")
+                    elif x == -1:
+                        f.write("N")
+                    elif y == 1:
+                        f.write("E")
+                    elif y == -1:
+                        f.write("W")
+                    i += 1
