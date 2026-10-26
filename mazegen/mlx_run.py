@@ -474,13 +474,15 @@ class Mlx_handler:
                 10,
                 self.win_height - 40,
                 0xFF0000FF,
-                "[0]: EXIT [1]: RELOAD [2]: SHOW PATH [3]: HIDE PATH [4]: COLOR",
+                "    [0]: EXIT  [1]: RELOAD  [2]: SHOW/HIDE PATH  [3]: COLOR",
             )
 
         is_draw: bool = False
+        is_path: bool = True
 
         def key_hook(keycode, param) -> None:
             nonlocal is_draw
+            nonlocal is_path
             if keycode == 48:  # 0
                 self.m.mlx_loop_exit(self.mlx)
 
@@ -490,14 +492,15 @@ class Mlx_handler:
                 is_draw = False
 
             elif keycode == 50:  # 2
-                draw_path(0xFF00FF00)
-                is_draw = False
+                if is_path:
+                    draw_path(0xFF00FF00)
+                    is_draw = False
+                else:
+                    draw_path(0xFF000000)
+                    is_draw = False
+                is_path = not is_path
 
             elif keycode == 51:  # 3
-                draw_path(0xFF000000)
-                is_draw = False
-
-            elif keycode == 52:  # 4
                 self.color = rd.choice(list(self.colors.values()))
                 self.m.mlx_clear_window(self.mlx, self.win)
                 is_draw = False
