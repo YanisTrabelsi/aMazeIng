@@ -46,7 +46,7 @@ def parse_int(config_dict: dict[str, str], key: str) -> int:
     except ValueError:
         raise ConfigError(f"{key} has to be an integer, \
                             got '{config_dict[key]}'")
-    if key in ("WIDTH".lower(), "HEIGHT".lower()):
+    if key in ("WIDTH", "HEIGHT"):
         if value < 2 or value > 100:
             raise ConfigError(f"{key} has to be between 2 and 100")
     return value
@@ -93,11 +93,6 @@ def dict_parser(config_dict: dict[str, str]) -> dict[str, Any]:
         raise ConfigError(
             f"PERFECT has to be True or False, got '{config_dict['PERFECT']}'"
         )
-    if config_dict["SHOW_FORTY_TWO"].upper() not in ("TRUE", "FALSE"):
-        raise ConfigError(
-            f"SHOW_FORTY_TWO has to be True or False, \
-            got '{config_dict['SHOW_FORTY_TWO']}'"
-        )
 
     if config_dict["OUTPUT_FILE"] == "":
         raise ConfigError("OUTPUT_FILE can't be empty")
@@ -105,6 +100,16 @@ def dict_parser(config_dict: dict[str, str]) -> dict[str, Any]:
     seed = None
     if "SEED" in config_dict:
         seed = parse_int(config_dict, "SEED")
+
+    show_forty_two: bool = True
+    if "SHOW_FORTY_TWO" in config_dict:
+        if config_dict["SHOW_FORTY_TWO"].upper() not in ("TRUE", "FALSE"):
+            raise ConfigError(
+                f"SHOW_FORTY_TWO has to be 'True' or 'False', \
+                got '{config_dict['SHOW_FORTY_TWO']}'"
+            )
+        else:
+            show_forty_two = bool(config_dict["SHOW_FORTY_TWO"])
 
     return {
         "width": width,
@@ -114,7 +119,7 @@ def dict_parser(config_dict: dict[str, str]) -> dict[str, Any]:
         "perfect": config_dict["PERFECT"].upper() == "TRUE",
         "seed": seed,
         "output_file": config_dict["OUTPUT_FILE"],
-        "show_forty_two": config_dict["SHOW_FORTY_TWO"].upper() == "TRUE",
+        "show_forty_two": show_forty_two
     }
 
 

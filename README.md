@@ -1,17 +1,36 @@
 *This activity has been created as part of the 42 curriculum by ytrabels.*
 
-# aMazeIng
+# A-Maze-ing
 
 ## Description
 
-aMazeIng is a Python maze generator and visualizer. It builds a grid maze, marks an entry and an exit, finds a route between them, displays the maze with MiniLibX, and writes the walls and route to an output file.
+A-Maze-ing is a Python maze generator with a graphical viewer. From a plain-text configuration file, the program:
 
-The generator supports two modes through `PERFECT`:
+1. generates a random maze (reproducible with a seed), either **perfect** (exactly one path between any two cells) or **non-perfect** (with loops);
+2. reserves a block of fully closed cells drawing a visible **"42"** in the middle of the maze (when the maze is large enough);
+3. computes the shortest path between the entry and the exit;
+4. displays the maze with **MiniLibX (MLX)**;
+5. writes the walls, the entry, the exit and the shortest path to an output file, using the hexadecimal format required by the subject.
 
-- `True`: keep the maze without loops.
-- `False`: open additional walls to create loops.
+The generation logic lives in a single reusable class, `MazeGenerator`, packaged as the `mazegen` module (see [Reusable module](#reusable-module)).
 
-The project also places a closed-cell pattern shaped like “42” in the center when the grid is large enough for it.
+### Repository layout
+
+```text
+.
+├── a_maze_ing.py                    # main program: config parsing + launch
+├── config.txt                       # default configuration
+├── makefile                         # install / run / debug / lint / clean
+├── mazegen/
+│   ├── __init__.py                  # exposes MazeGenerator
+│   ├── class_maze.py                # MazeGenerator (generation, solver, output)
+│   ├── mlx_draw.py                  # low-level MLX drawing helpers
+│   └── mlx_run.py                   # MLX window, key hooks, colors
+├── mazegen-1.0.0-py3-none-any.whl   # pip-installable package
+├── pyproject.toml                   # build metadata for the package
+├── LICENSE.md
+└── README.md
+```
 
 ## Instructions
 
@@ -19,113 +38,254 @@ The project also places a closed-cell pattern shaped like “42” in the center
 
 - Python 3.10 or later
 - NumPy
-- The Python MiniLibX package used by 42 (`mlx`)
-- A graphical environment supported by MiniLibX
+- The 42 MiniLibX Python bindings (`mlx`), from [mlx_CLXV](https://github.com/42school/mlx_CLXV)
+- A graphical environment able to open an MLX window
+- `flake8` and `mypy` for the lint rules
 
-Install the Python dependencies in the environment you intend to use. The Makefile includes an `install` target for the 42 MiniLibX setup, as well as `run`, `debug`, `lint`, `lint-strict`, and `clean` targets.
+### Installation
+
+```sh
+make install
+```
+
+This creates a virtual environment in `.venv`, clones and builds MiniLibX, then installs the `mlx` wheel, `numpy`, `flake8` and `mypy` inside it.
 
 ### Run
 
-The repository includes `config.txt` as a default configuration. From the repository root, run:
-
 ```sh
+make run
+# equivalent to:
 python3 a_maze_ing.py config.txt
 ```
 
-Or use:
+The program takes exactly one argument: the configuration file. It opens the MLX window and writes the generated maze to the file named by `OUTPUT_FILE`.
 
-```sh
-make run
-```
+### Other Makefile rules
 
-The program takes one configuration file as its argument. It opens the graphical maze window and writes the generated maze to the file named by `OUTPUT_FILE`.
-
-### Configuration file
-
-The file contains one `KEY=VALUE` pair per line. Blank lines and lines beginning with `#` are ignored. The following keys are required:
-
-| Key | Meaning | Example |
-| --- | --- | --- |
-| `WIDTH` | Maze width in cells, from 2 to 100. | `WIDTH=15` |
-| `HEIGHT` | Maze height in cells, from 2 to 100. | `HEIGHT=15` |
-| `ENTRY` | Entry coordinate in `x,y` order. | `ENTRY=6,13` |
-| `EXIT` | Exit coordinate in `x,y` order. | `EXIT=14,1` |
-| `OUTPUT_FILE` | Destination path for the generated maze. | `OUTPUT_FILE=maze.txt` |
-| `PERFECT` | Whether to keep the maze without loops. | `PERFECT=True` |
-
-`ENTRY` and `EXIT` are distinct coordinates, counted from zero. The first number is horizontal position `x` (column), in the range `0` to `WIDTH - 1`. The second is vertical position `y` (row), in the range `0` to `HEIGHT - 1`.
-
-The optional `SEED` key makes randomized generation reproducible:
-
-```text
-WIDTH=15
-HEIGHT=15
-ENTRY=6,13
-EXIT=14,1
-OUTPUT_FILE=maze.txt
-PERFECT=True
-SEED=42
-```
+| Rule | Description |
+| --- | --- |
+| `make debug` | Runs the program under `pdb`. |
+| `make lint` | `flake8` + `mypy` with `--warn-return-any --warn-unused-ignores --ignore-missing-imports --disallow-untyped-defs --check-untyped-defs`. |
+| `make lint-strict` | `flake8` + `mypy --strict`. |
+| `make clean` | Removes `__pycache__`, `.mypy_cache`, `.venv`, build artifacts and the generated `maze.txt`. |
 
 ### Graphical controls
 
-- `0`: close the window.
-- `1`: generate another maze.
-- `2`: show the route from entry to exit.
-- `3`: hide the displayed route.
+| Key | Action |
+| --- | --- |
+| `0` | Close the window and quit. |
+| `1` | Generate and display a new maze. |
+| `2` | Show / hide the shortest path from entry to exit. |
+| `3` | Change the wall color (picked at random in a palette of named colors). |
 
-### Output file
+The cells of the "42" pattern are drawn in a distinct color (crimson).
 
-The output contains one hexadecimal digit per cell, one row per line. Each digit encodes closed walls using bits 0–3 for North, East, South, and West respectively. After the grid, the file contains a blank line, the entry coordinate, the exit coordinate, and the route as `N`, `E`, `S`, and `W` letters.
+### Error handling
+
+The program reports a clear message instead of crashing when:
+
+- the number of arguments is wrong, the file does not exist or is not valid UTF-8;
+- a line is not of the form `KEY=VALUE`, a key is empty or duplicated, or a mandatory key is missing;
+- a value has the wrong type (non-integer size, malformed coordinates, boolean that is neither `True` nor `False`);
+- the entry or exit is outside the maze, entry and exit are identical, or one of them is on the "42" pattern;
+- the maze is too small to host the "42" pattern (the pattern is then omitted and a notice is printed).
+
+## Configuration file
+
+The file contains one `KEY=VALUE` pair per line. Lines starting with `#` and empty lines are ignored. Keys are case-insensitive; surrounding spaces are stripped.
+
+| Key | Required | Description | Example |
+| --- | --- | --- | --- |
+| `WIDTH` | yes | Maze width in cells (2 to 100). | `WIDTH=15` |
+| `HEIGHT` | yes | Maze height in cells (2 to 100). | `HEIGHT=15` |
+| `ENTRY` | yes | Entry cell, `x,y` (column, row), counted from 0. | `ENTRY=0,0` |
+| `EXIT` | yes | Exit cell, `x,y`. Must differ from `ENTRY`. | `EXIT=14,14` |
+| `OUTPUT_FILE` | yes | Path of the output file. | `OUTPUT_FILE=maze.txt` |
+| `PERFECT` | yes | `True`: no loops. `False`: loops are added. | `PERFECT=True` |
+| `SEED` | no | Integer seed for reproducible mazes. | `SEED=42` |
+| `SHOW_FORTY_TWO` | no | `True` / `False`: draw the "42" pattern (default: `True`). | `SHOW_FORTY_TWO=True` |
+
+Default `config.txt`:
+
+```text
+# Maze width
+WIDTH=15
+# Maze height
+HEIGHT=15
+# Entry coordinates
+ENTRY=0,0
+# Exit coordinates
+EXIT=14,14
+OUTPUT_FILE=maze.txt
+PERFECT=True
+SEED=42
+# Show the 42 pattern
+SHOW_FORTY_TWO=True
+```
+
+`x` is the horizontal position (column, from `0` to `WIDTH - 1`) and `y` the vertical position (row, from `0` to `HEIGHT - 1`). The "42" pattern is a 7 × 5 block centered in the maze; it needs a maze of at least **9 × 7** cells. Entry and exit cannot be placed on it.
+
+## Output file
+
+```text
+9515391539551795151151153      <- one row of the maze per line
+EBABAE812853C1412BA812812         (one hexadecimal digit per cell)
+...
+                               <- empty line
+0,0                            <- entry (x,y)
+14,14                          <- exit (x,y)
+SSEESEEENNEE...                <- shortest path, letters N / E / S / W
+```
+
+Each cell is a hexadecimal digit whose bits tell which walls are **closed**:
+
+| Bit | Direction |
+| --- | --- |
+| 0 (LSB) | North |
+| 1 | East |
+| 2 | South |
+| 3 | West |
+
+Example: `A` (`1010`) means the East and West walls are closed. Walls shared by two neighbouring cells are always encoded consistently on both sides, and the outer border of the maze is always closed. All lines end with `\n`.
 
 ## Algorithm
 
-The maze starts with separate cell regions. The generator repeatedly chooses a cell and one of its eligible neighboring cells, opens the wall between them, and merges their region identifiers. It stops when all traversable cells belong to one connected region. This is a randomized Kruskal-style spanning-tree procedure: choosing edges at random and merging components builds a connected maze without loops. When `PERFECT=False`, the generator then opens additional eligible walls to add loops.
+### Generation: randomized Kruskal
 
-This algorithm was chosen because it creates a connected maze while keeping the wall-removal logic local to neighboring cells. Random selection, combined with the optional seed, gives varied but reproducible mazes.
+Every cell starts closed (`0xF`) with its own region identifier. Then, repeatedly:
 
-## Reusable generator
+1. pick a random cell that still has a neighbour belonging to a different region (cells of the "42" pattern are excluded);
+2. pick one such neighbour at random;
+3. open the wall between the two cells and merge the two regions under a single identifier.
 
-The reusable maze-generation class is `MazeGenerator`, available from the `mazegen` module. It accepts the width, height, optional seed, `perfect` mode, entry, and exit. Coordinates passed to the class use `(x, y)` order.
+The loop stops when all cells outside the "42" pattern belong to one region. Since a wall is only opened between two *different* regions, no cycle can appear: the result is a spanning tree, i.e. a **perfect maze**.
+
+When `PERFECT=False`, a second pass visits every cell outside the pattern; each cell that still has more than two closed walls opens one extra wall towards a random neighbour (not part of the "42" pattern). These additional openings create loops and reduce dead ends.
+
+### Solving: wave propagation (BFS)
+
+The solver labels cells with their distance from the entry, expanding step by step until the exit is reached. The path is then rebuilt by walking back from the exit, each time moving to a neighbour whose step is one lower. Because exploration is level by level, the path found is a **shortest path**.
+
+### Why this algorithm
+
+- Randomized Kruskal only needs local operations (a cell and one neighbour), which keeps the wall-removal logic simple.
+- It never creates loops by construction, which gives the `PERFECT=True` guarantee for free.
+- It extends naturally to non-perfect mazes by removing a few more walls afterwards.
+- Seeding Python's `random` module makes every maze reproducible.
+
+## Reusable module
+
+The generation is implemented as one class, `MazeGenerator`, in the standalone `mazegen` package. A pre-built wheel, `mazegen-1.0.0-py3-none-any.whl`, is at the root of the repository.
+
+### Install
+
+```sh
+pip install mazegen-1.0.0-py3-none-any.whl
+```
+
+Note: `mazegen` imports the MLX bindings, so `mlx` must be installed in the same environment (see [Installation](#installation)). NumPy is installed automatically.
+
+### Rebuild the package from sources
+
+```sh
+python3 -m venv .venv && source .venv/bin/activate
+pip install build
+python3 -m build          # produces dist/mazegen-1.0.0-py3-none-any.whl and .tar.gz
+```
+
+### Parameters
+
+```python
+MazeGenerator(
+    width: int,
+    height: int,
+    seed=None,                       # int for reproducible mazes
+    perfect: bool = True,            # False -> loops
+    entry: tuple[int, int] = (0, 0), # (x, y)
+    exit: tuple[int, int] | None = None,  # (x, y), default (width-1, height-1)
+    show_forty_two: bool = True,
+)
+```
+
+If a parameter is invalid (size below 2, entry/exit out of bounds or identical), an error is printed and `is_instanciable` is set to `False`; nothing is generated.
+
+### Basic example
 
 ```python
 from mazegen import MazeGenerator
 
 maze = MazeGenerator(
-    width=15,
+    width=20,
     height=15,
     seed=42,
     perfect=True,
-    entry=(6, 13),
-    exit=(14, 1),
+    entry=(0, 0),
+    exit=(19, 14),
+    show_forty_two=True,
 )
-maze.generate()
 
-cells = maze.cells       # NumPy array containing the generated cells
-solution = maze.get_path()  # Cells from exit back to entry
+maze._generate()                 # generate without opening a window
+maze.write_output("maze.txt")    # walls + entry + exit + shortest path
+
+path = maze._get_path()[::-1]    # cells ordered from entry to exit
+print([(c.y, c.x) for c in path])  # (x, y) coordinates
 ```
 
-`maze.cells` provides access to the generated structure. `maze.get_path()` returns the solution as a list of cell objects, ordered from exit to entry. `maze.write_output(path)` writes the maze and solution in the project output format. The module can be imported from this repository with `from mazegen import MazeGenerator`. The repository does not currently contain build metadata or a wheel for pip installation.
+To generate **and** open the MLX viewer, call `maze.run()` instead of `maze._generate()`.
+
+### Accessing the structure and a solution
+
+| Attribute / method | Description |
+| --- | --- |
+| `maze.cells` | NumPy array `(height, width)` of `Cell` objects. For a cell, `cell.x` is the **row** and `cell.y` the **column**. |
+| `maze.layer_wall` | NumPy array `(height, width)` of wall bitmasks (same bit meaning as the output file). |
+| `maze.layer_id` | Region identifiers (all equal outside the "42" pattern once generated). |
+| `cell.is_fourty_two` | `True` for cells of the "42" pattern. |
+| `cell.step` | Distance from the entry (`-1` if not reached). |
+| `maze._get_path()` | Shortest path as a list of cells, **from exit to entry**. |
+| `maze.write_output(path)` | Writes the maze in the output file format. |
+| `maze.run()` | Generates the maze and starts the MLX window. |
+
+`MazeGenerator.Hex` provides the wall constants `NORTH = 1`, `EAST = 2`, `SOUTH = 4`, `WEST = 8`.
 
 ## Team and project management
 
-### Team roles
+### Roles
 
-This repository's Git history identifies `ytrabels` as its author. The project is documented here as an individual activity; the author is responsible for implementation, testing, and integration.
+Individual project, carried out by `ytrabels`: design, implementation, testing and integration.
 
-### Planning and retrospective
+### Planning and its evolution
 
-The repository does not contain a project plan or retrospective, so the timeline and what worked well or could be improved must be completed by the author from their own project experience before submission. No schedule or retrospective details are inferred from code history.
+[To be completed by the author: initial planning, how it changed, what was harder than expected.]
+
+### What worked well / what could be improved
+
+[To be completed by the author.]
 
 ### Tools
 
-The repository uses Python, NumPy, MiniLibX, Make, Flake8, and Mypy. Git is used for version control. AI assistance was used to review the coordinate conventions in the entry/exit handling and to draft and check this README against the subject requirements. The generated text and code changes should be reviewed by the author.
+Python, NumPy, MiniLibX, Make, flake8, mypy, Git.
 
 ## Resources
 
 - [Python documentation](https://docs.python.org/3/)
 - [NumPy documentation](https://numpy.org/doc/)
-- [MiniLibX for 42](https://github.com/42school/mlx_CLXV)
+- [MiniLibX for 42 (mlx_CLXV)](https://github.com/42school/mlx_CLXV)
+- [Maze generation algorithms](https://en.wikipedia.org/wiki/Maze_generation_algorithm)
 - [Kruskal's algorithm](https://en.wikipedia.org/wiki/Kruskal%27s_algorithm)
-- 42 *A-Maze-ing* subject, version 1.4 (`en.subject-34.pdf`)
+- [Breadth-first search](https://en.wikipedia.org/wiki/Breadth-first_search)
+- [Python Packaging User Guide](https://packaging.python.org/)
+- 42 *A-Maze-ing* subject, version 1.4
 
+### Use of AI
+
+AI was used as an assistant, not as a code generator for the core logic:
+
+- reviewing the entry/exit coordinate conventions (`x,y` in the config and output file vs. row/column in the code);
+- drafting and checking this README against the subject requirements.
+
+All AI output was reviewed, tested and is understood by the author.
+
+## License
+
+See [LICENSE.md](LICENSE.md).

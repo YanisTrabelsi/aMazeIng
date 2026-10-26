@@ -10,4 +10,3 @@ OUTPUT_FILE=maze.txt
 PERFECT=True
 SEED=42
 # Show 42 motif
-SHOW_FORTY_TWO=True
