@@ -21,6 +21,7 @@ install:
 	$(MAKE) > /dev/null; \
 	$(PIP) install -q mlx-*-py3-none-any.whl > /dev/null; \
 	$(PIP) install -q numpy > /dev/null; \
+	$(PIP) install -q flake8 > /dev/null; \
 	echo; \
 	printf "\033[32mDépendances installées avec succès.\033[0m\n"
 
@@ -31,14 +32,14 @@ debug:
 	$(PYTHON) -m pdb a_maze_ing.py config.txt
 
 lint:
-	$(PYTHON) -m flake8 .
+	$(PYTHON) -m flake8 . --exclude=.venv,.mlx_CLXV_tmp
 	$(PYTHON) -m mypy . --warn-return-any --warn-unused-ignores 
 		--ignore-missing-imports --disallow-untyped-defs 
-		--check-untyped-defs
+		--check-untyped-defs --exclude "(^|/)(\.venv|\.mlx_CLXV_tmp)/"
 
 lint-strict:
-	$(PYTHON) -m flake8 .
-	$(PYTHON) -m mypy . --strict
+	$(PYTHON) -m flake8 . --exclude=.venv,.mlx_CLXV_tmp
+	$(PYTHON) -m mypy . --strict --exclude "(^|/)(\.venv|\.mlx_CLXV_tmp)/"
 
 clean:
 	rm -rf "$(MLX_REPO)"

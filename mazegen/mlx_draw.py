@@ -31,6 +31,17 @@ def south(mlx, win, x: int, y: int, color: int):
 
 
 def put_path(mlx, win, x: int, y: int, color: int):
+    for i in range(CELL_SIZE - 30):
+        for j in range(CELL_SIZE - 30):
+            m.mlx_pixel_put(
+                mlx,
+                win,
+                x * CELL_SIZE + i + 40,
+                y * CELL_SIZE + j + 40,
+                color,
+            )
+
+def put_42(mlx, win, x: int, y: int, color: int):
     for i in range(CELL_SIZE):
         for j in range(CELL_SIZE):
             m.mlx_pixel_put(

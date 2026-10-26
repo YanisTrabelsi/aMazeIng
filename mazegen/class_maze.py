@@ -311,7 +311,17 @@ class MazeGenerator:
             print(
                 "\033[33m[NOTICE]\033[0m : 42 motif has been hidded, maze dimensions are too small"
             )
-
+        for cell in self.cells.flat:
+            if cell.y == int(self.entry[0]) and cell.x == int(self.entry[1]):
+                if cell.is_fourty_two:
+                    print("\033[031m[Error]\033[0m Entry or/and exit is on the 42 logo")
+                    self.is_instanciable = False
+                    return
+            if cell.y == int(self.exit[0]) and cell.x == int(self.exit[1]):
+                if cell.is_fourty_two:
+                    print("\033[031m[Error]\033[0m Entry or/and exit is on the 42 logo")
+                    self.is_instanciable = False
+                    return
         done = False
         while not done:
             self._destroy_wall()
@@ -339,7 +349,8 @@ class MazeGenerator:
         """Generate the maze and start its graphical interface."""
         if self.is_instanciable:
             self._generate()
-            Mlx_handler(self.width, self.height, self.cells, self)
+            if self.is_instanciable:
+                Mlx_handler(self.width, self.height, self.cells, self)
         else:
             print(
                 f"\033[31m[Error]\033[0m : The maze failed to generate, one or more of its arguments are incorrect"
@@ -356,8 +367,8 @@ class MazeGenerator:
             wall: int = cell.get_wall
             if cell.y == int(self.entry[0]) and cell.x == int(self.entry[1]):
                 cell.is_entry = True
-                entry_cell = cell
                 cell.step = 0
+                entry_cell = cell
             if cell.y == int(self.exit[0]) and cell.x == int(self.exit[1]):
                 cell.is_exit = True
                 exit_cell = cell
@@ -447,8 +458,10 @@ class MazeGenerator:
                     ),
                     None,
                 )
-
                 if previous is None:
+                    for e in neighbours:
+                        if e is not None:
+                            print(e.step)
                     raise RuntimeError(
                         f"Impossible de remonter le chemin depuis "
                         f"({target.y}, {target.x}), step={target.step}"
