@@ -4,11 +4,9 @@ VENV = .venv
 PYTHON = $(CURDIR)/$(VENV)/bin/python
 PIP = $(PYTHON) -m pip
 
-.PHONY: all install mlx_install clean run debug lint lint-strict
+.PHONY: all install clean run debug lint lint-strict
 
 all: install
-
-mlx_install: install
 
 install:
 	@set -eu; \

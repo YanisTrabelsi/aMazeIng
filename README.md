@@ -1,4 +1,4 @@
-*This activity has been created as part of the 42 curriculum by ytrabels.*
+*This activity has been created as part of the 42 curriculum by ytrabels and lherpet.*
 
 # A-Maze-ing
 
@@ -252,15 +252,25 @@ To generate **and** open the MLX viewer, call `maze.run()` instead of `maze._gen
 
 ### Roles
 
-Individual project, carried out by `ytrabels`: design, implementation, testing and integration.
+Individual project, carried out by `ytrabels` and `lherpet`: design, implementation, testing and integration.
 
 ### Planning and its evolution
 
-[To be completed by the author: initial planning, how it changed, what was harder than expected.]
+The project was organized around a few main milestones:
+
+1. Implement the maze data model and represent each cell's four walls with a hexadecimal bitmask.
+2. Build the generation process, including the optional closed-cell pattern forming the 42 logo.
+3. Find a shortest path between the entry and exit and serialize the maze in the required output format.
+4. Add the MiniLibX viewer and controls for regenerating the maze, toggling the path, and changing the wall color.
+5. Package the generator as the reusable `mazegen` module and document installation, configuration, and usage.
+
+The work evolved from implementing the generator itself to integrating the solver, graphical interface, configuration parser, and distributable package. One of the harder parts was keeping the different representations consistent: coordinates are supplied as `(x, y)`, while the NumPy grid is indexed by row and column; wall openings also need to update both adjacent cells. Integrating the MLX viewer and making the package usable separately from the command-line entry point required additional attention.
 
 ### What worked well / what could be improved
 
-[To be completed by the author.]
+Separating the maze logic into the `MazeGenerator` class and exposing it through the `mazegen` package makes the generator reusable outside the main script. The configuration file keeps common options accessible without editing the code, while the seed supports reproducible generation. The graphical controls also make it possible to inspect a maze and its shortest path interactively.
+
+The project could be improved by adding automated tests for configuration errors, wall-bit consistency, path validity, reproducibility, and both perfect and non-perfect mazes. The public API could also be made clearer by documenting which methods are intended for external use and which methods are internal implementation details. More systematic validation of constructor arguments and clearer separation between generation, solving, and rendering would make future maintenance easier.
 
 ### Tools
 
